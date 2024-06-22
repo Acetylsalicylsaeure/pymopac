@@ -7,12 +7,13 @@ copyright = '2024, Acetylsalicylsaeure'
 author = 'Acetylsalicylsaeure'
 
 # The full version, including alpha/beta/rc tags
-release = '0.1.0'
+release = '0.1'
 
 # -- General configuration ---------------------------------------------------
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.napoleon',
+    'sphinx.ext.viewcode',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -29,3 +30,7 @@ html_theme = 'alabaster'
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
+
+
+# -- Extension configuration -------------------------------------------------
+autodoc_mock_imports = ['mopac']
