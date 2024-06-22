@@ -5,7 +5,6 @@ build-backend = "setuptools.build_meta"
 [project]
 dynamic = ["version"]
 name = "pymopac"
-version = "alpha0.2"
 dependencies = [
 	"rdkit",
 ]
