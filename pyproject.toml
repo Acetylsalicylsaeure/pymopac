@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools >= 61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+dynamic = ["version"]
+name = "pymopac"
+version = "alpha0.2"
+dependencies = [
+	"rdkit",
+]
+authors = [
+	{name = "Acetylsalicylsaeure"},
+]
+description = "a python wrapper to interact with the semiempirical quantum chemistry program MOPAC"
+readme = "README.md"
+license = {file = "LICENSE"}
+keywords = ["MOPAC", "wrapper", "PM3", "PM6", "PM7", "AM1", "semiempirical", "quantum"]
+classifiers = [
+  # How mature is this project? Common values are
+  #   3 - Alpha
+  #   4 - Beta
+  #   5 - Production/Stable
+  "Development Status :: 1 - Planning",
+
+  # Indicate who your project is intended for
+  "Intended Audience :: Computational Chemists, Students",
+  "Topic :: Computational Chemistry",
+
+  # Pick your license as you wish (see also "license" above)
+  "License :: GPL3 License",
+
+  # Specify the Python versions you support here.
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+]
+
+[project.urls]
+Repository = "https://github.com/Acetylsalicylsaeure/pymopac"
+
