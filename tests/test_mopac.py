@@ -22,4 +22,7 @@ H          0.67305        0.91422       -0.28406"""
 
     result = subprocess.run(
         [MOPAC_PATH, f"{temp_path}/water.mop"], capture_output=True)
+    print(result)
+    print(result.stdout)
+    print(os.listdir(temp_path))
     assert "ended normally" in result.stdout.decode("utf-8").lower()
