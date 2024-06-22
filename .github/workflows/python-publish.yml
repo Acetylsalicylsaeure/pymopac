@@ -18,7 +18,7 @@ permissions:
 jobs:
   deploy:
 
-    runs-on: ubuntu-latest    
+    runs-on: ubuntu-24.04    
     
     # Specifying a GitHub environment is optional, but strongly encouraged
     environment: release
