@@ -10,4 +10,6 @@ coming soon tm
 
 ## Tests
 
-done for Ubuntu 24 LTS and Fedora 40
+done for Ubuntu 24 LTS and Fedora 40,
+
+Python 3.9-12
