@@ -3,8 +3,8 @@ requires = ["setuptools>=64", "setuptools_scm>=8"]
 build-backend = "setuptools.build_meta"
 
 [project]
-dynamic = ["version"]
 name = "pymopac"
+version = 0.1
 dependencies = [
 	"rdkit",
 ]
@@ -39,5 +39,3 @@ classifiers = [
 [project.urls]
 Repository = "https://github.com/Acetylsalicylsaeure/pymopac"
 
-[tool.setuptools_scm]
-version_file = "pymopac/_version.py"
