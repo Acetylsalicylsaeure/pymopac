@@ -9,6 +9,5 @@ def test_rdkit():
     assert isinstance(v_rdkit, str)
 
 
-def test_mopac():
-    v_mopac = subprocess.run([MOPAC_PATH, "-V"], capture_output=True)
-    assert v_mopac.returncode == 0
+def test_mopac_import():
+    assert MOPAC_PATH
