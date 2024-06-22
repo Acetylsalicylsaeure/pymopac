@@ -1,6 +1,7 @@
 import rdkit
 import pytest
 import subprocess
+from pymopac import MOPAC_PATH
 
 
 def test_rdkit():
@@ -9,5 +10,5 @@ def test_rdkit():
 
 
 def test_mopac():
-    v_mopac = subprocess.run(["mopac", "-V"], capture_output=True)
+    v_mopac = subprocess.run([MOPAC_PATH, "-V"], capture_output=True)
     assert v_mopac.returncode == 0
