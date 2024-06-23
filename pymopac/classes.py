@@ -100,6 +100,8 @@ class MopacInput():
 class MopacOutput():
     """
     reads the MOPAC .out file at the given out_path and parses datapoints
+
+    standalone runs possible, but calling via MopacInput().run() recommended.
     """
 
     def __init__(self, out_path: str, stdout=None, stderr=None):
