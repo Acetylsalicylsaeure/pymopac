@@ -12,10 +12,14 @@ except:
 class MopacInput():
     """
     Class that sets up the input file for a MOPAC calculation.
+
+
     geometry:
-        SMILES (str)
-        rdkit Mol
-        TODO more
+        + SMILES (str)
+
+        + rdkit Mol
+
+        + TODO more
     AddHs: bool
         calls AddHs on the mol object
     preopt: bool
@@ -89,22 +93,22 @@ class MopacInput():
             print("MOPAC ran sucessfully")
         else:
             print(process.stderr)
-        return MopacOutput(path=f"{self.tmp_dir}/pymopac.out",
+        return MopacOutput(out_path=f"{self.tmp_dir}/pymopac.out",
                            stderr=process.stderr, stdout=process.stdout)
 
 
 class MopacOutput():
     """
-    reads the MOPAC .out file at the given path and parses datapoints
+    reads the MOPAC .out file at the given out_path and parses datapoints
     """
 
-    def __init__(self, path: str, stdout=None, stderr=None):
+    def __init__(self, out_path: str, stdout=None, stderr=None):
         self.stdout = stdout
         self.stderr = stderr
-        if not os.path.isfile(path):
+        if not os.path.isfile(out_path):
             raise Exception("output file not found")
 
-        with open(path, "r") as file:
+        with open(out_path, "r") as file:
             self.outfile = file.read()
 
 

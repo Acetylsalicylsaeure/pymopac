@@ -21,4 +21,4 @@ else:
     print("Warning: MOPAC binary not found in PATH")
 
 
-__all__ = ['get_mopac', 'MOPAC_PATH', MopacInput, MopacOutput]
+__all__ = ['get_mopac', 'MOPAC_PATH', "MopacInput", "MopacOutput"]
