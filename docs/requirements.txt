@@ -1,4 +1,5 @@
 sphinx
 sphinx_rtd_theme
+myst-parser
 rdkit
 numpy==1.26
