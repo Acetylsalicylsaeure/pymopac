@@ -49,7 +49,7 @@ def get_mopac():
                     return binary
     if "last_binary" not in locals():
         last_binary = None
-        raise Warning("No MOPAC binary found")
+        print("MOPAC binary not found, returning None")
     return last_binary
 
 
