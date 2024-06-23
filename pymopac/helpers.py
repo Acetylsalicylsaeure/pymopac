@@ -47,6 +47,9 @@ def get_mopac():
                 last_binary = binary
                 if "run" in binary:
                     return binary
+    if not last_binary:
+        last_binary = None
+        raise Warning("No MOPAC binary found")
     return last_binary
 
 
