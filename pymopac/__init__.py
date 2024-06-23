@@ -6,7 +6,7 @@ a semi-empirical quantum chemistry program.
 """
 
 from .helpers import get_mopac
-from .classes import MopacInput
+from .classes import MopacInput, MopacOutput
 
 __version__ = "early_alpha"
 __author__ = "Acetylsalicylsaeure"
@@ -21,4 +21,4 @@ else:
     print("Warning: MOPAC binary not found in PATH")
 
 
-__all__ = ['get_mopac', 'MOPAC_PATH', MopacInput]
+__all__ = ['get_mopac', 'MOPAC_PATH', MopacInput, MopacOutput]

@@ -30,10 +30,11 @@ def find_binaries_in_path():
 
 def get_mopac():
     """
-        Checks if the MOPAC binary is within the path. looks for approximate alternatives. E.g., finds
-        run_mopac7 on ubuntu22, but older MOPAC versions might parse files differently, thus being 
-        incompatible with this wrapper
-        """
+    Checks if the MOPAC binary is within the path. looks for approximate
+    alternatives. E.g., finds run_mopac7 on ubuntu22, but older MOPAC
+    versions might parse files differently, thus being incompatible with
+    this wrapper
+    """
     binaries = find_binaries_in_path()
     if "mopac" in binaries:
         return "mopac"
