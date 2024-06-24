@@ -10,6 +10,20 @@ wraps MOPAC to conveniently interact with the program from within python scripts
 
 + numpy<2 ([rdkit issue](https://github.com/rdkit/rdkit/issues/7477))
 
++ matplotlib (optional for plotting)
+
+## Installation
+
++ via pip
+'pip install pymopac'
+
++ directly from github (nightly)
+'''
+git clone Acetylsalicylsaeure/pymopac
+cd pymopac
+pip install .
+'''
+
 ## Usage
 
 At the core, this module implements two classes, MopacInput and MopacOutput. These represent the MOPAC .mop input and .out output files, respectively. MopacInput takes a molecular geometry in various supported formats like SMILES or rdkit Mol. Furthermore, various keywords are accepted that define the MOPAC Header. The input file can be sent to MOPAC via the .run() method, which returns a MopacOutput object.
