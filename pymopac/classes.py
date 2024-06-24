@@ -47,6 +47,9 @@ class MopacInput():
     model: str
         all supported MOPAC keywords, e.g. AM1, PM6, ...
 
+    custom_header: str
+        custom string that is attached to other header keywords
+
     comment: str
         second line in the input file
 
@@ -62,9 +65,10 @@ class MopacInput():
     """
 
     def __init__(self, geometry, AddHs: bool = False, preopt: bool = False,
-                 model: str = "PM7", comment: str = "#", path=False,
-                 verbose: bool = False, stream: bool = False):
+                 model: str = "PM7", custom_header: str = "", comment: str = "#",
+                 path=False, verbose: bool = False, stream: bool = False):
         self.model = model
+        self.custom_header = custom_header
         self.comment = comment
         self.verbose = verbose
         self.stream = stream
@@ -93,7 +97,7 @@ class MopacInput():
         """
         concatenates all class features into the MOPAC input file
         """
-        header = self.model
+        header = self.model + self.custom_header
         xyz = Chem.MolToXYZBlock(self.mol).split("\n")[1:]
         xyz = "\n".join(xyz)
 
