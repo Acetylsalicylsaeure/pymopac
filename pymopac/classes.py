@@ -64,7 +64,7 @@ class MopacInput():
 
     """
 
-    def __init__(self, geometry, AddHs: bool = False, preopt: bool = False,
+    def __init__(self, geometry, AddHs: bool = False, preopt: bool = True,
                  model: str = "PM7", custom_header: str = "", comment: str = "#",
                  path=False, verbose: bool = False, stream: bool = False):
         self.model = model
