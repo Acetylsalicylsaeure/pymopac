@@ -2,7 +2,10 @@ from rdkit import Chem
 from rdkit.Chem import AllChem
 from time import time_ns
 import os
+import time
 import subprocess
+import threading
+
 try:
     from pymopac import MOPAC_PATH
 except:
@@ -47,9 +50,6 @@ class MopacInput():
     comment: str
         second line in the input file
 
-    run: bool
-        directly runs the MOPAC calculation with init
-
     path:
         if False, a dir is created under /tmp/, else under the given str
 
@@ -62,8 +62,8 @@ class MopacInput():
     """
 
     def __init__(self, geometry, AddHs: bool = False, preopt: bool = False,
-                 model: str = "PM7", comment: str = "#", run: bool = False,
-                 path=False, verbose: bool = False, stream: bool = False):
+                 model: str = "PM7", comment: str = "#", path=False,
+                 verbose: bool = False, stream: bool = False):
         self.model = model
         self.comment = comment
         self.verbose = verbose
@@ -88,9 +88,6 @@ class MopacInput():
             self.tmp_dir = path
             if not os.path.isdir(self.tmp_dir):
                 os.mkdir(self.tmp_dir)
-
-        if run:
-            self.run()
 
     def inpfile(self):
         """
@@ -119,21 +116,86 @@ class MopacInput():
         if stream is None:
             stream = self.stream
 
-        with open(f"{self.tmp_dir}/pymopac.mop", "w") as file:
+        infile = f"{self.tmp_dir}/pymopac.mop"
+        outfile = f"{self.tmp_dir}/pymopac.out"
+        with open(infile, "w") as file:
             file.write(self.inpfile())
         if verbose:
-            print(f"input file written to {self.tmp_dir}/pymopac.mop")
+            print(f"input file written to {infile}")
 
-        os.chdir(self.tmp_dir)
+        if not verbose and not stream:
+            process = self.silent_run(infile=infile)
+        else:
+            process = self.verbose_run(infile=infile, verbose=verbose,
+                                       stream=stream)
+
+        return MopacOutput(out_path=outfile,
+                           stderr=process.stderr, stdout=process.stdout)
+
+    def silent_run(self, infile: str):
+        """
+        just runs MOPAC, no feedback or streaming
+        """
         process = subprocess.run(
-            [MOPAC_PATH, "pymopac.mop"],
+            [MOPAC_PATH, infile],
             capture_output=True)
         if process.returncode == 0:
-            print("MOPAC ran sucessfully")
+            pass
         else:
-            print(process.stderr)
-        return MopacOutput(out_path=f"{self.tmp_dir}/pymopac.out",
-                           stderr=process.stderr, stdout=process.stdout)
+            raise Exception(process.stderr)
+        return process
+
+    def verbose_run(self, infile: str, verbose: bool = False,
+                    stream: bool = False):
+        """
+        sets up the basics for a stream run and contains switches for being
+        verbose and streaming
+        """
+        process, lines = self.stream_run(infile)
+        if stream is True:
+            line_counter = 0
+            for line in lines:
+                print(line)
+                line_counter += 1
+            if line_counter < 2:
+                print(
+                    "no lines captured, calculations presumably done too fast")
+        return process
+
+    def stream_run(self, infile):
+        """
+        returns both the mopac process and the stream yielding lines
+        """
+        outfile = os.path.splitext(infile)[0] + ".out"
+        # Start the MOPAC process
+        mopac_process = subprocess.Popen(["mopac", infile])
+
+        # Wait for the output file to be created
+        while not os.path.exists(outfile):
+            time.sleep(0.1)
+
+        def pure_stream():
+            # Start the tail process to stream the output file
+            tail_process = subprocess.Popen(["tail", "-f", outfile],
+                                            stdout=subprocess.PIPE,
+                                            universal_newlines=True)
+            try:
+                # Stream the output
+                for line in tail_process.stdout:
+                    yield line.strip()
+
+                    # Check if MOPAC process has finished
+                    if mopac_process.poll() is not None:
+                        break
+                    if "MOPAC DONE" in line:
+                        break
+            finally:
+                # Ensure we terminate the tail process
+                tail_process.terminate()
+                tail_process.wait()
+                # Wait for MOPAC to finish if it hasn't already
+                mopac_process.wait()
+        return mopac_process, pure_stream()
 
 
 class MopacOutput():
