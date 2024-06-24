@@ -19,7 +19,7 @@ wraps MOPAC to conveniently interact with the program from within python scripts
 `pip install pymopac`
 
 + directly from github (nightly)
-```
+```bash
 git clone Acetylsalicylsaeure/pymopac
 cd pymopac
 pip install .
