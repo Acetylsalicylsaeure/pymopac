@@ -15,20 +15,31 @@ wraps MOPAC to conveniently interact with the program from within python scripts
 ## Installation
 
 + via pip
-'pip install pymopac'
+
+`pip install pymopac`
 
 + directly from github (nightly)
-'''
+```bash
 git clone Acetylsalicylsaeure/pymopac
 cd pymopac
 pip install .
-'''
+```
 
 ## Usage
 
 At the core, this module implements two classes, MopacInput and MopacOutput. These represent the MOPAC .mop input and .out output files, respectively. MopacInput takes a molecular geometry in various supported formats like SMILES or rdkit Mol. Furthermore, various keywords are accepted that define the MOPAC Header. The input file can be sent to MOPAC via the .run() method, which returns a MopacOutput object.
 
 This Object Class parses the .out file and aims to dynamically extract calculation results.
+
+### Minimal working example:
+```python
+import pymopac
+
+
+infile = pymopac.MopacInput("CC")
+outfile = infile.run()
+print(outfile.outfile)
+```
 
 ## Tests
 
