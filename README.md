@@ -41,6 +41,18 @@ outfile = infile.run()
 print(outfile.outfile)
 ```
 
+### Run feedback
+3 different keywords are implemented, which offer feedback to a MOPAC run
+
++ `verbose=True`
+    prints internal messages from the python module to stdout
+
++ `stream=True`
+    streams the MOPAC .out file to stdout
+
++ `plot=True`
+    uses matplotlib to plot the progress in gradient and heat of formation
+
 ## Tests
 
 done for Ubuntu 24 LTS and Fedora 40,
