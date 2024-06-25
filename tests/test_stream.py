@@ -15,7 +15,7 @@ def test_streamend(capsys):
 
 
 def test_short_stream(capsys):
-    target = "no lines captured, calculations presumably done too fast"
+    target = "No lines captured, calculations presumably done too fast"
 
     infile = pymopac.MopacInput("C", AddHs=True, stream=True)
     infile.run()

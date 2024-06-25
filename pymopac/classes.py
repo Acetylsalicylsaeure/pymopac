@@ -62,16 +62,27 @@ class MopacInput():
     stream: bool
         if True, streams the outfile to stdout
 
+    plot: bool
+        if True, plots progress via matplotlib
+
     """
 
-    def __init__(self, geometry, AddHs: bool = False, preopt: bool = True,
-                 model: str = "PM7", custom_header: str = "", comment: str = "#",
-                 path=False, verbose: bool = False, stream: bool = False):
+    def __init__(self, geometry,
+                 AddHs: bool = True,
+                 preopt: bool = True,
+                 model: str = "PM7",
+                 custom_header: str = "",
+                 comment: str = "#",
+                 path=False,
+                 verbose: bool = False,
+                 stream: bool = False,
+                 plot: bool = False):
         self.model = model
         self.custom_header = custom_header
         self.comment = comment
         self.verbose = verbose
         self.stream = stream
+        self.plot = plot
 
         self.mol = GeometryToMol(geometry)
 
@@ -104,7 +115,9 @@ class MopacInput():
         inp = "\n".join([header, self.comment, xyz])
         return inp
 
-    def run(self, verbose: bool = None, stream: bool = None):
+    def run(self, verbose: bool = None,
+            stream: bool = None,
+            plot: bool = None):
         """
         runs MOPAC as a subprocess
         returns MopacOutput class
@@ -114,11 +127,16 @@ class MopacInput():
 
         stream: bool
             if True, streams the outfile to stdout
+
+        plot: bool
+            if True, plots progress via matplotlib
         """
         if verbose is None:
             verbose = self.verbose
         if stream is None:
             stream = self.stream
+        if plot is None:
+            plot = self.plot
 
         infile = f"{self.tmp_dir}/pymopac.mop"
         outfile = f"{self.tmp_dir}/pymopac.out"
@@ -127,11 +145,11 @@ class MopacInput():
         if verbose:
             print(f"input file written to {infile}")
 
-        if not verbose and not stream:
+        if not verbose and not stream and not plot:
             process = self.silent_run(infile=infile)
         else:
             process = self.verbose_run(infile=infile, verbose=verbose,
-                                       stream=stream)
+                                       stream=stream, plot=plot)
 
         return MopacOutput(out_path=outfile,
                            stderr=process.stderr, stdout=process.stdout)
@@ -150,20 +168,97 @@ class MopacInput():
         return process
 
     def verbose_run(self, infile: str, verbose: bool = False,
-                    stream: bool = False):
+                    stream: bool = False,
+                    plot: bool = False):
+        """
+        Sets up the basics for a stream run and contains switches for being
+        verbose and streaming. If plot is True, it creates a live-updating
+        matplotlib figure of gradient values.
+        """
+        process, lines = self.stream_run(infile)
+        line_counter = 0
+
+        if plot:
+            import matplotlib.pyplot as plt
+            from matplotlib.animation import FuncAnimation
+
+            self.grads = []
+            self.heats = []
+            self.fig, (self.ax, self.ax_heat) = plt.subplots(
+                2, 1)
+            self.line, = self.ax.plot([], [])
+            self.line_heat, = self.ax_heat.plot([], [])
+
+            self.ax.set_xlabel('Cycle')
+            self.ax.set_ylabel('Gradient')
+            self.ax_heat.set_xlabel('Cycle')
+            self.ax_heat.set_ylabel('Heat')
+
+            self.ax.set_title('Gradient vs. Cycle')
+            self.ax_heat.set_title('Heat vs. Cycle')
+
+            def update_plot(frame):
+                self.line.set_data(range(len(self.grads)), self.grads)
+                self.line_heat.set_data(range(len(self.heats)), self.heats)
+                self.ax.relim()
+                self.ax.autoscale_view()
+                self.ax_heat.relim()
+                self.ax_heat.autoscale_view()
+                return self.line, self.line_heat
+
+            self.ani = FuncAnimation(self.fig, update_plot,
+                                     frames=None, interval=100, blit=True,
+                                     cache_frame_data=False, save_count=100)
+            plt.tight_layout()
+            plt.show(block=False)
+
+        for line in lines:
+            if stream:
+                print(line)
+            if plot:
+                if "GRAD.:" in line:
+                    spl = line.split()
+                    i = spl.index("GRAD.:")
+                    i_heat = spl.index("HEAT:")
+                    self.grads.append(float(spl[i+1]))
+                    self.heats.append(float(spl[i_heat+1]))
+                    # self.fig.canvas.draw_idle()
+                    self.fig.canvas.flush_events()
+            line_counter += 1
+
+        if line_counter < 2:
+            print("No lines captured, calculations presumably done too fast")
+
+        if plot:
+            plt.show()  # Keep the plot open after the function finishes
+
+        return process
+
+    def verbose_run_dep(self, infile: str, verbose: bool = False,
+                        stream: bool = False,
+                        plot: bool = False):
         """
         sets up the basics for a stream run and contains switches for being
         verbose and streaming
         """
         process, lines = self.stream_run(infile)
-        if stream is True:
-            line_counter = 0
-            for line in lines:
+        line_counter = 0
+        if plot:
+            self.grads = []
+
+        for line in lines:
+            if stream:
                 print(line)
-                line_counter += 1
-            if line_counter < 2:
-                print(
-                    "no lines captured, calculations presumably done too fast")
+            if plot:
+                if "GRAD.:" in line:
+                    spl = line.split()
+                    i = spl.index("GRAD.:")
+                    self.grads.append(spl[i+1])
+                    self.fig
+            line_counter += 1
+        if line_counter < 2:
+            print(
+                "no lines captured, calculations presumably done too fast")
         return process
 
     def stream_run(self, infile):
