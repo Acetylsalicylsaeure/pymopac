@@ -4,11 +4,11 @@ from time import time_ns
 import os
 import time
 import subprocess
-import threading
 
 try:
     from pymopac import MOPAC_PATH
-except:
+except Exception as e:
+    print(e)
     MOPAC_PATH = "mopac"
 
 
@@ -25,6 +25,47 @@ def GeometryToMol(geometry):
     elif isinstance(geometry, Chem.rdchem.Mol):
         mol = geometry
     return mol
+
+
+def ResultFromOutput(outfile: str) -> str:
+    break_str = " -------------------------------------------------------------------------------"
+    out_l = outfile.split("\n")
+    break_index = out_l.index(break_str)+1
+    result_l = out_l[break_index:]
+    return result_l
+
+
+def ParseResult(result: str) -> dict:
+    """
+    takes the result section of the MOPAC outfile, returns targeted parts
+    mostly in the format key: (value, unit)
+    """
+    dic = dict()
+    dic["header"] = result[0][1:]
+    dic["comment"] = result[1][1:]
+
+    for line in result:
+        parsed = ParseLine(line)
+        if parsed is not None:
+            key, value, unit = parsed
+            dic[key] = (value, " ".join(unit))
+
+    return dic
+
+
+def ParseLine(line):
+    targets = {"FINAL HEAT OF FORMATION =": (-2, -1),
+               "COSMO AREA              =": (-3, -1)
+               }
+    for key in targets.keys():
+        if key in line:
+            spli = line.split()
+            unit_i = targets[key][1]
+            if unit_i == -1:
+                unit_i = None
+            return (key.strip("=").strip(), float(spli[targets[key][0]]),
+                    spli[targets[key][0]+1:unit_i])
+    return None
 
 
 class MopacInput():
@@ -301,6 +342,12 @@ class MopacOutput():
     """
     reads the MOPAC .out file at the given out_path and parses datapoints
 
+    outputs are available raw under self.outfile or parsed as a dictionary
+    mostly in the format key: (value, unit) under self.dic
+
+    some dictionary functionality is directly available for the class, i.e.
+    keys can directly queried via self[key]
+
     standalone runs possible, but calling via MopacInput().run() recommended.
     """
 
@@ -313,8 +360,26 @@ class MopacOutput():
         with open(out_path, "r") as file:
             self.outfile = file.read()
 
+        self.result = ResultFromOutput(self.outfile)
+        self.dic = ParseResult(self.result)
+
+    def keys(self):
+        return self.dic.keys()
+
+    def values(self):
+        return self.dic.values()
+
+    def items(self):
+        return self.dic.items()
+
+    def __getitem__(self, key):
+        return self.dic[key]
+
 
 if __name__ == "__main__":
     inp = MopacInput("CCC", AddHs=True, preopt=True, verbose=True)
     print(inp)
     out = inp.run()
+    print(out.keys())
+    for item in out.items():
+        print(item)
