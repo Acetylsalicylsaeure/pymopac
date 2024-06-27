@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pymopac"
-version = "0.2"
+version = "0.3"
 dependencies = [
 	"rdkit",
 	"numpy<2",
@@ -21,7 +21,7 @@ classifiers = [
   #   3 - Alpha
   #   4 - Beta
   #   5 - Production/Stable
-  "Development Status :: 3 - Alpha",
+  "Development Status :: 4 - Beta",
 
   # Indicate who your project is intended for
   "Intended Audience :: Education",
