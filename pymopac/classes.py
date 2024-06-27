@@ -1,5 +1,6 @@
 from rdkit import Chem
 from rdkit.Chem import AllChem
+import rdkit
 from time import time_ns
 import os
 import time
@@ -22,7 +23,7 @@ def GeometryToMol(geometry):
             mol = Chem.MolFromSmiles(geometry)
         except Exception as e:
             raise RuntimeError("Failed to parse input as SMILES", e)
-    elif isinstance(geometry, Chem.rdchem.Mol):
+    elif isinstance(geometry, rdkit.Chem.rdchem.Mol):
         mol = geometry
     return mol
 
@@ -43,17 +44,11 @@ def ParseResult(result: str) -> dict:
     dic = dict()
     dic["header"] = result[0][1:]
     dic["comment"] = result[1][1:]
-    store = None
 
     for line in result:
-        if store is not None:
-            dic[store] = [float(x) for x in line.split()]
-            store = None
         parsed = ParseLine(line)
         if parsed is not None:
             key, value, unit, store = parsed
-            if key is None:
-                continue
             if unit is not None:
                 unit = " ".join(unit)
                 try:
@@ -75,11 +70,8 @@ def ParseLine(line):
                "IONIZATION POTENTIAL    =": (-2, None),
                "HOMO LUMO ENERGIES (EV) =": (-2, None),
                "NO. OF FILLED LEVELS    =": -1,
-               "MOLECULAR WEIGHT        =": 3,
-               "EIGENVALUES": "nextline",
-
+               "MOLECULAR WEIGHT        =": 3
                }
-    store = None
     for key in targets.keys():
         if key in line:
             spli = line.split()
@@ -91,10 +83,6 @@ def ParseLine(line):
             elif isinstance(target_key, int):
                 return (key.strip("=").strip(), float(spli[target_key]), None,
                         None)
-            elif target_key == "nextline":
-                return (None, None, None,
-                        key)
-
     return None
 
 

@@ -20,5 +20,4 @@ def test_HF():
     iop = outfile["IONIZATION POTENTIAL"][0]
     iop_target = 15.795581
     assert iop_target*0.95 < iop < iop_target*1.05
-    assert len(outfile["EIGENVALUES"]) == 5
     assert isinstance(outfile.mol, Chem.rdchem.Mol)
