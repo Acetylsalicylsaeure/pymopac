@@ -43,29 +43,80 @@ def ParseResult(result: str) -> dict:
     dic = dict()
     dic["header"] = result[0][1:]
     dic["comment"] = result[1][1:]
+    store = None
 
     for line in result:
+        if store is not None:
+            dic[store] = [float(x) for x in line.split()]
+            store = None
         parsed = ParseLine(line)
         if parsed is not None:
-            key, value, unit = parsed
-            dic[key] = (value, " ".join(unit))
+            key, value, unit, store = parsed
+            if key is None:
+                continue
+            if unit is not None:
+                unit = " ".join(unit)
+                try:
+                    unit = float(unit)
+                except Exception as e:
+                    pass
+                dic[key] = (value, unit)
+            else:
+                dic[key] = value
 
     return dic
 
 
 def ParseLine(line):
-    targets = {"FINAL HEAT OF FORMATION =": (-2, -1),
-               "COSMO AREA              =": (-3, -1)
+    targets = {"FINAL HEAT OF FORMATION =": (-2, None),
+               "COSMO AREA              =": (-3, None),
+               "COSMO VOLUME            =": (-3, None),
+               "GRADIENT NORM           =": (-3, None),
+               "IONIZATION POTENTIAL    =": (-2, None),
+               "HOMO LUMO ENERGIES (EV) =": (-2, None),
+               "NO. OF FILLED LEVELS    =": -1,
+               "MOLECULAR WEIGHT        =": 3,
+               "EIGENVALUES": "nextline",
+
                }
+    store = None
     for key in targets.keys():
         if key in line:
             spli = line.split()
-            unit_i = targets[key][1]
-            if unit_i == -1:
-                unit_i = None
-            return (key.strip("=").strip(), float(spli[targets[key][0]]),
-                    spli[targets[key][0]+1:unit_i])
+            target_key = targets[key]
+            if isinstance(target_key, tuple):
+                unit_i = target_key[1]
+                return (key.strip("=").strip(), float(spli[target_key[0]]),
+                        spli[target_key[0]+1:unit_i], None)
+            elif isinstance(target_key, int):
+                return (key.strip("=").strip(), float(spli[target_key]), None,
+                        None)
+            elif target_key == "nextline":
+                return (None, None, None,
+                        key)
+
     return None
+
+
+def ExtractMol(result: str):
+    start_i = None
+    for i, n in enumerate(result):
+        if "CARTESIAN COORDINATES" in n:
+            start_i = i
+    if start_i is None:
+        return Exception("cartesian coordinates not found")
+    start_i += 2
+    end_i = result[start_i:].index("")
+    end_i += start_i
+    XYZRaw = result[start_i:end_i]
+    XYZBlock = str(len(XYZRaw)) + "\n\n"
+
+    for line in XYZRaw:
+        XYZBlock += " ".join(line.split()[1:]) + "\n"
+
+    mol = Chem.MolFromXYZBlock(XYZBlock)
+
+    return mol
 
 
 class MopacInput():
@@ -362,6 +413,7 @@ class MopacOutput():
 
         self.result = ResultFromOutput(self.outfile)
         self.dic = ParseResult(self.result)
+        self.mol = ExtractMol(self.result)
 
     def keys(self):
         return self.dic.keys()
@@ -377,9 +429,8 @@ class MopacOutput():
 
 
 if __name__ == "__main__":
-    inp = MopacInput("CCC", AddHs=True, preopt=True, verbose=True)
+    inp = MopacInput("[H][F]", verbose=True)
     print(inp)
     out = inp.run()
-    print(out.keys())
     for item in out.items():
         print(item)
