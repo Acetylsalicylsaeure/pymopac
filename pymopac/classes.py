@@ -7,7 +7,11 @@ import time
 import subprocess
 
 try:
-    from pymopac import MOPAC_PATH
+    from pymopac import get_mopac
+    MOPAC_PATH = get_mopac()
+    if MOPAC_PATH is None:
+        MOPAC_PATH = "mopac"
+        print("MOPAC not found in path, falling back to trying 'mopac'. expect issues.")
 except Exception as e:
     print(e)
     MOPAC_PATH = "mopac"
