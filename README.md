@@ -41,6 +41,38 @@ outfile = infile.run()
 print(outfile.outfile)
 ```
 
+### Getting calculated properties
+```python
+import pymopac
+
+
+outfile = pymopac.MopacInput("c1ccccc1").run()
+print(outfile.keys())
+print(outfile["IONIZATION POTENTIAL"])
+```
+
+### working with Mol objects
+The module internally represents the molecule via rdkit Mol objects. They can serve both as inputs and can be accessed as outputs after having their geometry optimized with MOPAC
+```python
+from rdkit import Chem
+from rdkit.Chem import AllChem
+import pymopac
+from rdkit.Chem import rdDetermineBonds
+
+
+mmff_mol = Chem.MolFromSmiles("c1ccc1")
+mmff_mol = AllChem.AddHs(mmff_mol)
+AllChem.EmbedMolecule(mmff_mol)
+AllChem.MMFFOptimizeMolecule(mmff_mol)
+
+outfile = pymopac.MopacInput(mmff_mol).run()
+mopac_mol = outfile.mol
+# since we don't parse bonds at this stage of development, it is necessary to infer them
+rdDetermineBonds.DetermineBonds(mopac_mol)
+
+print(AllChem.GetBestRMS(mmff_mol, mopac_mol))
+```
+
 ### Run feedback
 3 different keywords are implemented, which offer feedback to a MOPAC run
 
@@ -58,3 +90,7 @@ print(outfile.outfile)
 done for Ubuntu 24 LTS and Fedora 40,
 
 Python 3.9-12
+
+## Roadmap
++ add multiline parsing
++ add parsing for further keywords
