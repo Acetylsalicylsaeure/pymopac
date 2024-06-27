@@ -1,7 +1,7 @@
 import rdkit
 import pytest
 import subprocess
-from pymopac import MOPAC_PATH
+from pymopac.helpers import get_mopac
 
 
 def test_rdkit():
@@ -10,4 +10,4 @@ def test_rdkit():
 
 
 def test_mopac_import():
-    assert MOPAC_PATH
+    assert get_mopac()

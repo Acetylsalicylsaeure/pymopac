@@ -1,5 +1,5 @@
 from time import time
-from pymopac import MOPAC_PATH
+from pymopac.helpers import get_mopac
 import subprocess
 import os
 
@@ -20,6 +20,7 @@ H          1.91979        0.05300       -0.09570
 H          0.67305        0.91422       -0.28406"""
         file.write(water_input)
 
+    MOPAC_PATH = get_mopac()
     result = subprocess.run(
         [MOPAC_PATH, f"{temp_path}/water.mop"], capture_output=True)
     print(result)
