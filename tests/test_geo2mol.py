@@ -6,23 +6,20 @@ import rdkit
 
 
 def test_smi():
-    mol = GeometryToMol("CC")
+    mol = GeometryToMol("CC", False, False)
     assert isinstance(mol, Chem.rdchem.Mol)
     assert len(mol.GetAtoms()) == 2
 
 
 def test_mol():
     rdmol = Chem.MolFromSmiles("CC")
-    mol = GeometryToMol(rdmol)
+    mol = GeometryToMol(rdmol, False, False)
     assert isinstance(mol, Chem.rdchem.Mol)
     assert len(mol.GetAtoms()) == 2
 
 
 def test_preoptimized_mol():
     rdmol = Chem.MolFromSmiles("CC")
-    AllChem.AddHs(rdmol)
-    AllChem.EmbedMolecule(rdmol)
-    AllChem.MMFFOptimizeMolecule(rdmol)
-    mol = GeometryToMol(rdmol)
+    mol = GeometryToMol(rdmol, True, True)
     assert isinstance(mol, rdkit.Chem.rdchem.Mol)
-    assert len(mol.GetAtoms()) == 2
+    assert len(mol.GetAtoms()) == 8

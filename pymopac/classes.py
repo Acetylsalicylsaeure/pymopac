@@ -5,6 +5,7 @@ from time import time_ns
 import os
 import time
 import subprocess
+import numpy as np
 
 try:
     from pymopac import get_mopac
@@ -17,7 +18,7 @@ except Exception as e:
     MOPAC_PATH = "mopac"
 
 
-def GeometryToMol(geometry):
+def GeometryToMol(geometry, AddHs, preopt):
     """
     Helper function that tries to infer a geometry from any input and returns a
     rdkti Mol
@@ -29,7 +30,49 @@ def GeometryToMol(geometry):
             raise RuntimeError("Failed to parse input as SMILES", e)
     elif isinstance(geometry, rdkit.Chem.rdchem.Mol):
         mol = geometry
+
+    if AddHs:
+        mol = AllChem.AddHs(mol)
+    if mol.GetNumConformers() == 0:
+        AllChem.EmbedMolecule(mol)
+    if preopt:
+        AllChem.MMFFOptimizeMolecule(mol)
+
+        # check if there are some overlapping atoms, reoptimize as needed
+        overlapping_pairs = check_overlap(mol)
+        if overlapping_pairs is not []:
+            # print(overlapping_pairs)
+            conf = mol.GetConformer(0)
+            for i, j in overlapping_pairs:
+                wiggle = np.random.normal(0, 0.3, 3)
+                conf.SetAtomPosition(i, conf.GetAtomPosition(i) + wiggle)
+                conf.SetAtomPosition(j, conf.GetAtomPosition(j) - wiggle)
+            # print(check_overlap(mol))
+            # print(Chem.MolToXYZBlock(mol))
+            AllChem.MMFFOptimizeMolecule(mol)
+
     return mol
+
+
+def check_overlap(mol: rdkit.Chem.rdchem.Mol):
+    """
+    checks mol object vor overlapping atoms
+    """
+    threshhold = 0.01
+    conf = mol.GetConformer(0)
+    atoms = mol.GetNumAtoms()
+    overlapping_pairs = []
+
+    for i in range(atoms):
+        for j in range(i+1, atoms):
+            pos_i = conf.GetAtomPosition(i)
+            pos_j = conf.GetAtomPosition(j)
+
+            dist = np.sqrt(sum((pos_i[k] - pos_j[k])**2 for k in range(3)))
+            if dist < threshhold:
+                overlapping_pairs.append((i, j))
+
+    return overlapping_pairs
 
 
 def ResultFromOutput(outfile: str) -> str:
@@ -168,13 +211,7 @@ class MopacInput():
         self.stream = stream
         self.plot = plot
 
-        self.mol = GeometryToMol(geometry)
-
-        if AddHs:
-            self.mol = AllChem.AddHs(self.mol)
-        if preopt:
-            AllChem.EmbedMolecule(self.mol)
-            AllChem.MMFFOptimizeMolecule(self.mol)
+        self.mol = GeometryToMol(geometry, AddHs=AddHs, preopt=preopt)
 
         if not path:
             ts = time_ns()

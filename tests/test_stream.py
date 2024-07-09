@@ -3,10 +3,10 @@ import pytest
 
 
 def test_streamend(capsys):
-    target = "**          Digital Object Identifier (DOI): 10.5281/zenodo.6511958          **"
+    # target = "**          Digital Object Identifier (DOI): 10.5281/zenodo.6511958          **"
     target = "ENDED NORMALLY"
     infile = pymopac.MopacInput(
-        "CCCCCCC", AddHs=True, stream=True)
+        "CCCCCCCC", AddHs=True, stream=True)
     outfile = infile.run()
 
     captured = capsys.readouterr()
