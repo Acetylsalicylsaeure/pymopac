@@ -197,7 +197,7 @@ class MopacInput():
     def __init__(self, geometry,
                  AddHs: bool = True,
                  preopt: bool = True,
-                 model: str = "PM7 ",
+                 model: str = "PM7",
                  custom_header: str = "",
                  comment: str = "#",
                  path=False,
@@ -229,7 +229,7 @@ class MopacInput():
         """
         concatenates all class features into the MOPAC input file
         """
-        header = self.model + self.custom_header
+        header = " ".join([self.model, self.custom_header])
         xyz = Chem.MolToXYZBlock(self.mol).split("\n")[1:]
         xyz = "\n".join(xyz)
 
