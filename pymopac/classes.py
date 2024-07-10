@@ -78,7 +78,10 @@ def check_overlap(mol: rdkit.Chem.rdchem.Mol):
 def ResultFromOutput(outfile: str) -> str:
     break_str = " -------------------------------------------------------------------------------"
     out_l = outfile.split("\n")
-    break_index = out_l.index(break_str)+1
+    if break_str in out_l:
+        break_index = out_l.index(break_str)+1
+    else:
+        break_index = 0
     result_l = out_l[break_index:]
     return result_l
 
