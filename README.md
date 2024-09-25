@@ -94,5 +94,5 @@ Python 3.9-12
 ## Roadmap
 + ensure that requirements are optional
 + route through /dev/stdout for less disk writes
-+ add multiline parsing
++ implement better parsing algo
 + add parsing for further keywords
