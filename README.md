@@ -96,3 +96,5 @@ Python 3.9-12
 + route through /dev/stdout for less disk writes
 + implement better parsing algo
 + add parsing for further keywords
++ add accuracy tests
++ implement performance overhead benchmark
