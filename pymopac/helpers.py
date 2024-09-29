@@ -73,6 +73,37 @@ def optional_imports(libs, namespace):
             warnings.warn(f"Failed to import {lib}\n{e}", ImportWarning)
 
 
+def xyz_identifier(geometry):
+    try:
+        geometry = geometry.split("\n")
+        if geometry[0].isnumeric():
+            geometry = geometry[1:]
+
+        geometry = "\n".join(geometry).strip().split("\n")
+
+        result = all([xyz_line_checker(line) for line in geometry])
+        return result, "\n".join([""]+geometry+[""])
+    except:
+        return False, None
+
+
+def xyz_line_checker(line):
+    line = line.split()
+    if len(line) != 4:
+        return False
+    if not isinstance(line[0], str):
+        return False
+    return all([float_checker(x) for x in line[1:]])
+
+
+def float_checker(string):
+    try:
+        float(string)
+        return True
+    except:
+        return False
+
+
 if __name__ == "__main__":
     print(get_mopac())
     optional_imports("import numpy as np", globals())
