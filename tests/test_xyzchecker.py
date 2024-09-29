@@ -12,7 +12,7 @@ H          2.80152        0.56165       -0.83821
 H          2.80152       -1.02898       -0.05216
 H          2.80152        0.44708        0.93234"""
     state, geo = xyz_identifier(string)
-    assert state is True and geo == string
+    assert state is True and geo == "\n"+string+"\n"
 
 
 def test_correct_withNumber():
@@ -31,9 +31,10 @@ H          0.89826       -2.31580        0.01987
 H         -1.54854       -1.91187        0.06686
 H         -2.43093        0.40747        0.03077
 H         -0.86662        2.33026       -0.06670
-H          2.91354        1.97213       -0.17702"""
+H          2.91354        1.97213       -0.17702
+"""
     state, geo = xyz_identifier(string)
-    assert state is True and geo == string[4:]
+    assert state is True and geo == string[3:]
 
 
 def test_correct_plusWhitespace():
@@ -57,7 +58,8 @@ H          2.91354        1.97213       -0.17702
 
 
    """
-    target = """C          1.40256       -0.21961       -0.05405
+    target = """
+C          1.40256       -0.21961       -0.05405
 C          0.51726       -1.29786        0.00101
 C         -0.85979       -1.07066        0.02882
 C         -1.35782        0.23300        0.00670
@@ -70,6 +72,7 @@ H          0.89826       -2.31580        0.01987
 H         -1.54854       -1.91187        0.06686
 H         -2.43093        0.40747        0.03077
 H         -0.86662        2.33026       -0.06670
-H          2.91354        1.97213       -0.17702"""
+H          2.91354        1.97213       -0.17702
+"""
     state, geo = xyz_identifier(string)
     assert state is True and geo == target
