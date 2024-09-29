@@ -1,4 +1,5 @@
 import os
+import warnings
 
 
 def find_binaries_in_path():
@@ -52,6 +53,28 @@ def get_mopac():
         print("MOPAC binary not found, returning None")
     return last_binary
 
+    try:
+        for lib in libs:
+            exec(f"{lib}", globals())
+    except:
+        raise ImportError()
+
+
+def optional_imports(libs, namespace):
+    if isinstance(libs, str):
+        libs = [libs]
+    if not isinstance(libs, list):
+        raise AttributeError("please supply either a list or str to import")
+
+    for lib in libs:
+        try:
+            exec(lib, namespace)
+        except Exception as e:
+            warnings.warn(f"Failed to import {lib}\n{e}", ImportWarning)
+
 
 if __name__ == "__main__":
     print(get_mopac())
+    optional_imports("import numpy as np", globals())
+    optional_imports(["import matplotlib.pyplot as plt"], globals())
+    optional_imports("obviously wrong", globals())
