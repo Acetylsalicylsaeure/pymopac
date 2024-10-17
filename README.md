@@ -25,6 +25,8 @@ cd pymopac
 pip install .
 ```
 
+The basic parts of the package (Outfile parsing, Infile from XYZ block) can be run without any dependencies. For this, please make use of pip's `--no-dependencies` flag.
+
 ## Usage
 
 At the core, this module implements two classes, MopacInput and MopacOutput. These represent the MOPAC .mop input and .out output files, respectively. MopacInput takes a molecular geometry in various supported formats like SMILES or rdkit Mol. Furthermore, various keywords are accepted that define the MOPAC Header. The input file can be sent to MOPAC via the .run() method, which returns a MopacOutput object.

@@ -1,11 +1,8 @@
-from rdkit import Chem
-from rdkit.Chem import AllChem
-import rdkit
 from time import time_ns
 import os
 import time
 import subprocess
-import numpy as np
+from pymopac.helpers import optional_imports, xyz_identifier
 
 try:
     from pymopac import get_mopac
@@ -23,6 +20,13 @@ def GeometryToMol(geometry, AddHs, preopt):
     Helper function that tries to infer a geometry from any input and returns a
     rdkti Mol
     """
+
+    xyz_status, xyz_block = xyz_identifier(geometry)
+    if xyz_status:
+        return xyz_block
+
+    optional_imports(["import rdkit", "from rdkit import Chem",
+                     "from rdkit.Chem import AllChem"], globals())
     if isinstance(geometry, str):
         try:
             mol = Chem.MolFromSmiles(geometry)
@@ -44,6 +48,7 @@ def GeometryToMol(geometry, AddHs, preopt):
             # print(overlapping_pairs)
             conf = mol.GetConformer(0)
             for i, j in overlapping_pairs:
+                optional_imports("import numpy as np", globals())
                 wiggle = np.random.normal(0, 0.3, 3)
                 conf.SetAtomPosition(i, conf.GetAtomPosition(i) + wiggle)
                 conf.SetAtomPosition(j, conf.GetAtomPosition(j) - wiggle)
@@ -54,7 +59,7 @@ def GeometryToMol(geometry, AddHs, preopt):
     return mol
 
 
-def check_overlap(mol: rdkit.Chem.rdchem.Mol):
+def check_overlap(mol):
     """
     checks mol object vor overlapping atoms
     """
@@ -68,6 +73,7 @@ def check_overlap(mol: rdkit.Chem.rdchem.Mol):
             pos_i = conf.GetAtomPosition(i)
             pos_j = conf.GetAtomPosition(j)
 
+            optional_imports("import numpy as np", globals())
             dist = np.sqrt(sum((pos_i[k] - pos_j[k])**2 for k in range(3)))
             if dist < threshhold:
                 overlapping_pairs.append((i, j))
@@ -75,7 +81,7 @@ def check_overlap(mol: rdkit.Chem.rdchem.Mol):
     return overlapping_pairs
 
 
-def ResultFromOutput(outfile: str) -> str:
+def ResultFromOutput(outfile: str):
     break_str = " -------------------------------------------------------------------------------"
     out_l = outfile.split("\n")
     if break_str in out_l:
@@ -152,6 +158,7 @@ def ExtractMol(result: str):
     for line in XYZRaw:
         XYZBlock += " ".join(line.split()[1:]) + "\n"
 
+    optional_imports("from rdkit import Chem", globals())
     mol = Chem.MolFromXYZBlock(XYZBlock)
 
     return mol
@@ -228,13 +235,24 @@ class MopacInput():
             if not os.path.isdir(self.tmp_dir):
                 os.mkdir(self.tmp_dir)
 
+        try:
+            optional_imports(["import rdkit", "from rdkit import Chem",
+                              "from rdkit.Chem import AllChem"], globals())
+            self.optionals = True
+        except:
+            self.optionals = False
+
     def inpfile(self):
         """
         concatenates all class features into the MOPAC input file
         """
         header = " ".join([self.model, self.custom_header])
-        xyz = Chem.MolToXYZBlock(self.mol).split("\n")[1:]
-        xyz = "\n".join(xyz)
+
+        if self.optionals and not xyz_identifier(self.mol)[0]:
+            xyz = Chem.MolToXYZBlock(self.mol).split("\n")[1:]
+            xyz = "\n".join(xyz)
+        else:
+            xyz = self.mol
 
         inp = "\n".join([header, self.comment, xyz])
         return inp
