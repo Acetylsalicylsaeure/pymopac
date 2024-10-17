@@ -1,2 +1,2 @@
 rdkit
-numpy<2
+numpy
