@@ -1,3 +1,4 @@
+from .output import MopacOutput
 from time import time_ns
 import os
 import time
@@ -439,8 +440,9 @@ class MopacInput():
         return mopac_process, pure_stream()
 
 
+"""
 class MopacOutput():
-    """
+    
     reads the MOPAC .out file at the given out_path and parses datapoints
 
     outputs are available raw under self.outfile or parsed as a dictionary
@@ -450,7 +452,7 @@ class MopacOutput():
     keys can directly queried via self[key]
 
     standalone runs possible, but calling via MopacInput().run() recommended.
-    """
+    
 
     def __init__(self, out_path: str, stdout=None, stderr=None):
         self.stdout = stdout
@@ -476,7 +478,7 @@ class MopacOutput():
 
     def __getitem__(self, key):
         return self.dic[key]
-
+"""
 
 if __name__ == "__main__":
     inp = MopacInput("[H][F]", verbose=True)
