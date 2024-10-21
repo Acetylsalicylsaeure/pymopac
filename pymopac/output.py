@@ -188,3 +188,6 @@ class StandardParser(BaseParser):
                         ("NO. OF FILLED LEVELS    =", 1))
         self.set_result(outputclass,
                         ("MOLECULAR WEIGHT        =", 1))
+        _, pointgroup_i = self.find_sublist("POINT GROUP:")
+        if pointgroup_i:
+            outputclass["POINT_GROUP"] = self.section[pointgroup_i]
