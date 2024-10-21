@@ -294,7 +294,16 @@ class MopacInput():
             process = self.verbose_run(infile=infile, verbose=verbose,
                                        stream=stream, plot=plot)
 
-        return MopacOutput(out_path=outfile,
+        with open(outfile, "r") as f:
+            result = f.read()
+        try:
+            result_splitter = "-------------------------------------------------------------------------------\n"
+            i = result.index(result_splitter) + len(result_splitter)
+            result = result[i:]
+        except:
+            print("whoops, no result area found")
+
+        return MopacOutput(outfile=result,
                            stderr=process.stderr, stdout=process.stdout)
 
     def silent_run(self, infile: str):

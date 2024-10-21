@@ -43,8 +43,9 @@ class BaseParser:
 
     def locate(self, search_tuple: tuple):
         start, end = self.find_sublist(search_tuple[0])
-        if start is None or end is None:
+        if end is None:
             return None
+            # raise Exception("sublist not found")
 
         if isinstance(search_tuple[1], int):
             number = self.section[end + search_tuple[1]-1]
@@ -84,6 +85,13 @@ class BaseParser:
                 i = self.section[i+1:].index(search[0])+i+1
         except Exception:
             return None, None
+        return None, None
+
+    def set_result(self, outputclass, search_tuple):
+        search_result = self.locate(search_tuple)
+        if isinstance(search_result, NumUnit):
+            key = search_tuple[0].strip("=").strip().replace(" ", "_")
+            outputclass[key] = search_result
 
     def parse(self, outputclass, result):
         pass
@@ -109,10 +117,28 @@ class NumUnit:
 
 
 class MopacOutput(BaseOutput):
-    def __init__(self, outfile):
+    def __init__(self, outfile: str, stdout=None, stderr=None):
         super().__init__(outfile)
+        self.outfile = outfile
+        try:
+            lines = outfile.split("\n")[:2]
+            self.header = lines[0].strip()
+            self.comment = lines[1].strip()
+        except:
+            pass
+        self.stdout = stdout
+        self.stderr = stderr
         self.parsers = [XyzParser(self.result), StandardParser(self.result)]
         self.parse_all()
+
+    def keys(self):
+        return self.__dict__.keys()
+
+    def __getitem__(self, key):
+        return self.__dict__[key]
+
+    def __setitem__(self, key, value):
+        self.__dict__[key] = value
 
 
 class XyzParser(BaseParser):
@@ -130,130 +156,35 @@ class XyzParser(BaseParser):
             else:
                 xyz = f"{line_j-1}\n\n" + xyz
                 line_j = None
-        outputclass.xyz = xyz[:-1]
+        if xyz != "0\n\n":
+            outputclass.xyz = xyz[:-1]
 
 
 class StandardParser(BaseParser):
-    pass
+    def parse(self, outputclass, result):
+        result = result.split()
 
+        self.set_result(outputclass,
+                        ("FINAL HEAT OF FORMATION =", 4, 5))
+        self.set_result(outputclass,
+                        ("COSMO AREA              =", 1, [2, 3]))
+        self.set_result(outputclass,
+                        ("COSMO VOLUME            =", 1, [2, 3]))
+        self.set_result(outputclass,
+                        ("GRADIENT NORM           =", 3, [4, 5]))
+        self.set_result(outputclass,
+                        ("IONIZATION POTENTIAL    =", 1, 2))
 
-class depMopacOutput():
-    """
-    reads the MOPAC .out file at the given out_path and parses datapoints
+        homo = self.locate(("HOMO LUMO ENERGIES (EV) =", 1))
+        if isinstance(homo, NumUnit):
+            homo.unit = "EV"
+            outputclass["HOMO"] = homo
+        lumo = self.locate(("HOMO LUMO ENERGIES (EV) =", 1))
+        if isinstance(lumo, NumUnit):
+            lumo.unit = "EV"
+            outputclass["LUMO"] = lumo
 
-    outputs are available raw under self.outfile or parsed as a dictionary
-    mostly in the format key: (value, unit) under self.dic
-
-    some dictionary functionality is directly available for the class, i.e.
-    keys can directly queried via self[key]
-
-    standalone runs possible, but calling via MopacInput().run() recommended.
-    """
-
-    def __init__(self, out_path: str, stdout=None, stderr=None):
-        self.stdout = stdout
-        self.stderr = stderr
-        if not os.path.isfile(out_path):
-            raise Exception("output file not found")
-
-        with open(out_path, "r") as file:
-            self.outfile = file.read()
-
-        self.result = ResultFromOutput(self.outfile)
-        self.dic = ParseResult(self.result)
-        self.mol = ExtractMol(self.result)
-
-    def keys(self):
-        return self.dic.keys()
-
-    def values(self):
-        return self.dic.values()
-
-    def items(self):
-        return self.dic.items()
-
-    def __getitem__(self, key):
-        return self.dic[key]
-
-
-def ResultFromOutput(outfile: str):
-    break_str = " -------------------------------------------------------------------------------"
-    out_l = outfile.split("\n")
-    if break_str in out_l:
-        break_index = out_l.index(break_str)+1
-    else:
-        break_index = 0
-    result_l = out_l[break_index:]
-    return result_l
-
-
-def ParseResult(result: str) -> dict:
-    """
-    takes the result section of the MOPAC outfile, returns targeted parts
-    mostly in the format key: (value, unit)
-    """
-    dic = dict()
-    dic["header"] = result[0][1:]
-    dic["comment"] = result[1][1:]
-
-    for line in result:
-        parsed = ParseLine(line)
-        if parsed is not None:
-            key, value, unit, store = parsed
-            if unit is not None:
-                unit = " ".join(unit)
-                try:
-                    unit = float(unit)
-                except Exception as e:
-                    pass
-                dic[key] = (value, unit)
-            else:
-                dic[key] = value
-
-    return dic
-
-
-def ParseLine(line):
-    targets = {"FINAL HEAT OF FORMATION =": (-2, None),
-               "COSMO AREA              =": (-3, None),
-               "COSMO VOLUME            =": (-3, None),
-               "GRADIENT NORM           =": (-3, None),
-               "IONIZATION POTENTIAL    =": (-2, None),
-               "HOMO LUMO ENERGIES (EV) =": (-2, None),
-               "NO. OF FILLED LEVELS    =": -1,
-               "MOLECULAR WEIGHT        =": 3
-               }
-    for key in targets.keys():
-        if key in line:
-            spli = line.split()
-            target_key = targets[key]
-            if isinstance(target_key, tuple):
-                unit_i = target_key[1]
-                return (key.strip("=").strip(), float(spli[target_key[0]]),
-                        spli[target_key[0]+1:unit_i], None)
-            elif isinstance(target_key, int):
-                return (key.strip("=").strip(), float(spli[target_key]), None,
-                        None)
-    return None
-
-
-def ExtractMol(result: str):
-    start_i = None
-    for i, n in enumerate(result):
-        if "CARTESIAN COORDINATES" in n:
-            start_i = i
-    if start_i is None:
-        return Exception("cartesian coordinates not found")
-    start_i += 2
-    end_i = result[start_i:].index("")
-    end_i += start_i
-    XYZRaw = result[start_i:end_i]
-    XYZBlock = str(len(XYZRaw)) + "\n\n"
-
-    for line in XYZRaw:
-        XYZBlock += " ".join(line.split()[1:]) + "\n"
-
-    optional_imports("from rdkit import Chem", globals())
-    mol = Chem.MolFromXYZBlock(XYZBlock)
-
-    return mol
+        self.set_result(outputclass,
+                        ("NO. OF FILLED LEVELS    =", 1))
+        self.set_result(outputclass,
+                        ("MOLECULAR WEIGHT        =", 1))

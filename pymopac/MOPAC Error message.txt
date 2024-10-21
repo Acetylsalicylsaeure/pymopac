@@ -1,0 +1,6 @@
+
+          MOPAC input data-set file: "PM7 
+#
+
+K      0.000000    0.000000    0.000000
+K      0.000000    0.000000    0.000000" does not exist.
