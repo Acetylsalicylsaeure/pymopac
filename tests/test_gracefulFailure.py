@@ -10,7 +10,7 @@ for i in [0, 1]:
 
 
 def test_overlap():
-    infile = pymopac.MopacInput(mol, preopt=False)
+    infile = pymopac.MopacInput(mol, preopt=False, aux=False)
     out = infile.run()
     assert isinstance(out, pymopac.MopacOutput)
     assert len(out.outfile) > 2

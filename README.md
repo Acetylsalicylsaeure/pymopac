@@ -57,7 +57,6 @@ The module internally represents the molecule via rdkit Mol objects. They can se
 from rdkit import Chem
 from rdkit.Chem import AllChem
 import pymopac
-from rdkit.Chem import rdDetermineBonds
 
 
 mmff_mol = Chem.MolFromSmiles("c1ccc1")
@@ -66,9 +65,7 @@ AllChem.EmbedMolecule(mmff_mol)
 AllChem.MMFFOptimizeMolecule(mmff_mol)
 
 outfile = pymopac.MopacInput(mmff_mol).run()
-mopac_mol = outfile.mol
-# since we don't parse bonds at this stage of development, it is necessary to infer them
-rdDetermineBonds.DetermineBonds(mopac_mol)
+mopac_mol = outfile.toMol()
 
 print(AllChem.GetBestRMS(mmff_mol, mopac_mol))
 ```
