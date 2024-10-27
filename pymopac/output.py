@@ -1,4 +1,5 @@
 import os
+import warnings
 from .helpers import optional_imports
 
 
@@ -19,7 +20,7 @@ class BaseOutput:
 
     def parse_all(self):
         for parser in self.parsers:
-            parser.parse(self, self.result)
+            parser.parse(self)
 
 
 class BaseParser:
@@ -38,7 +39,7 @@ class BaseParser:
         self.location_dict = dict()
 
     def get_section(self, result):
-        return result.split()
+        return self.split_with_newlines(result)
         # TODO
 
     def locate(self, search_tuple: tuple):
@@ -93,7 +94,10 @@ class BaseParser:
             key = search_tuple[0].strip("=").strip().replace(" ", "_")
             outputclass[key] = search_result
 
-    def parse(self, outputclass, result):
+    def split_with_newlines(self, text):
+        return [word for line in text.splitlines() for word in (line.split() or [''])]
+
+    def parse(self, outputclass):
         pass
 
 
@@ -116,10 +120,28 @@ class NumUnit:
         return self.number
 
 
+class ValUnit:
+    """
+    Class to wrap an arbitrary value with a unit
+    """
+
+    def __init__(self, value, unit=None):
+        self.value = value
+        self.unit = unit
+
+    def __repr__(self):
+        if self.unit:
+            return f"{self.value} {self.unit}"
+        else:
+            return str(self.value)
+
+
 class MopacOutput(BaseOutput):
-    def __init__(self, outfile: str, stdout=None, stderr=None):
+    def __init__(self, outfile: str, stdout=None, stderr=None, aux: str = None):
         super().__init__(outfile)
         self.outfile = outfile
+        if aux:
+            self.aux = aux
         try:
             lines = outfile.split("\n")[:2]
             self.header = lines[0].strip()
@@ -129,6 +151,8 @@ class MopacOutput(BaseOutput):
         self.stdout = stdout
         self.stderr = stderr
         self.parsers = [XyzParser(self.result), StandardParser(self.result)]
+        if hasattr(self, "aux"):
+            self.parsers.append(NaiveParser(self.aux))
         self.parse_all()
 
     def keys(self):
@@ -140,11 +164,21 @@ class MopacOutput(BaseOutput):
     def __setitem__(self, key, value):
         self.__dict__[key] = value
 
+    def toMol(self):
+        from rdkit import Chem
+        from rdkit.Chem import rdDetermineBonds
+        if hasattr(self, "xyz"):
+            mol = Chem.MolFromXYZBlock(self.xyz)
+            rdDetermineBonds.DetermineBonds(mol)
+            return mol
+
 
 class XyzParser(BaseParser):
-    def parse(self, outputclass, result):
+    def parse(self, outputclass):
         _, end = self.find_sublist("CARTESIAN COORDINATES")
-        result = result.split()[end:]
+        if isinstance(end, int):
+            end += 1
+        result = self.section[end:]
         i = 0
         line_j = 1
         xyz = ""
@@ -161,9 +195,7 @@ class XyzParser(BaseParser):
 
 
 class StandardParser(BaseParser):
-    def parse(self, outputclass, result):
-        result = result.split()
-
+    def parse(self, outputclass):
         self.set_result(outputclass,
                         ("FINAL HEAT OF FORMATION =", 4, 5))
         self.set_result(outputclass,
@@ -191,3 +223,70 @@ class StandardParser(BaseParser):
         _, pointgroup_i = self.find_sublist("POINT GROUP:")
         if pointgroup_i:
             outputclass["POINT_GROUP"] = self.section[pointgroup_i]
+        _, formula_i = self.find_sublist("Empirical Formula:")
+        if formula_i:
+            formula_e = self.section[formula_i:].index("=")
+            outputclass["Empirical_Formula"] = " ".join(
+                self.section[formula_i:formula_i+formula_e])
+            if self.section[formula_i+formula_e+2] == "atoms":
+                outputclass["Atom_Count"] = self.section[formula_i+formula_e+1]
+                if "xyz" in outputclass.keys() and outputclass["xyz"].split("\n")[0] != outputclass["Atom_Count"]:
+                    warnings.warn(
+                        "Atom count of molecular formula incongruent with xyz block, proceed with caution")
+
+
+class NaiveParser(BaseParser):
+    def get_section(self, result):
+        return result.split("\n")
+
+    def parse(self, outputclass):
+        try:
+            assert self.section[0] == " START OF MOPAC PROGRAM"
+            assert self.section[1] == " START OF MOPAC FILE"
+            assert self.section[-3] == " END OF MOPAC FILE"
+            assert self.section[-2] == " END OF MOPAC PROGRAM"
+        except Exception as e:
+            warnings.warn("AUX assertions failed, proceed with caution")
+
+        self.section = self.section[2:-3]
+        main_dic = dict()
+        section_dic = dict()
+        section_header = ""
+        in_header = False
+
+        title = ""
+        unit = None
+        line_memory = []
+
+        for line in self.section:
+            if " ########" in line:
+                in_header = not in_header
+                if len(section_dic) > 0:
+                    main_dic[section_header] = section_dic
+                if in_header:
+                    section_header = ""
+                continue
+            if in_header:
+                section_header += line.strip().strip("#").strip()
+            else:
+                if "=" in line:
+                    subline = line[:line.index("=")]
+                    if section_header != "":
+                        if title != "" and len(line_memory) > 0:
+                            section_dic[title] = ValUnit(
+                                "\n".join(line_memory), unit)
+                        if ":" in line:
+                            dpoint_index = line.index(":")
+                            title = subline[:dpoint_index].strip()
+                            unit = subline[dpoint_index+1:].strip("=")
+                        else:
+                            title = subline.strip().strip("=")
+                            unit = None
+                        line_memory = []
+                        eq_index = line.index("=")+1
+                        if len(line) > eq_index:
+                            line_memory.append(line[eq_index:].strip())
+                else:
+                    line_memory.append(line.strip())
+
+        outputclass.aux_dict = main_dic

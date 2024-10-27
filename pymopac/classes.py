@@ -214,13 +214,15 @@ class MopacInput():
                  path=False,
                  verbose: bool = False,
                  stream: bool = False,
-                 plot: bool = False):
+                 plot: bool = False,
+                 aux: bool = True):
         self.model = model
         self.custom_header = custom_header
         self.comment = comment
         self.verbose = verbose
         self.stream = stream
         self.plot = plot
+        self.aux = aux
 
         self.mol = GeometryToMol(geometry, AddHs=AddHs, preopt=preopt)
 
@@ -248,6 +250,8 @@ class MopacInput():
         concatenates all class features into the MOPAC input file
         """
         header = " ".join([self.model, self.custom_header])
+        if self.aux:
+            header += " AUX"
 
         if self.optionals and not xyz_identifier(self.mol)[0]:
             xyz = Chem.MolToXYZBlock(self.mol).split("\n")[1:]
@@ -303,8 +307,15 @@ class MopacInput():
         except:
             print("whoops, no result area found")
 
+        if self.aux:
+            aux_path = outfile.strip(".out") + ".aux"
+            with open(aux_path, "r") as f:
+                aux = f.read()
+        else:
+            aux = None
+
         return MopacOutput(outfile=result,
-                           stderr=process.stderr, stdout=process.stdout)
+                           stderr=process.stderr, stdout=process.stdout, aux=aux)
 
     def silent_run(self, infile: str):
         """
