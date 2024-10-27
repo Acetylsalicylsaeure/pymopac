@@ -6,10 +6,11 @@ a semi-empirical quantum chemistry program.
 """
 
 from .helpers import get_mopac
-from .classes import MopacInput, MopacOutput
+from .input import MopacInput
+from .output import MopacOutput
 
 __version__ = "Beta"
 __author__ = "Acetylsalicylsaeure"
 
 
-__all__ = ['get_mopac', "MopacInput", "MopacOutput"]
+__all__ = ["MopacInput", "MopacOutput", "get_mopac"]

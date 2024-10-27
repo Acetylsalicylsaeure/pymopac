@@ -1,6 +1,4 @@
-import os
 import warnings
-from .helpers import optional_imports
 
 
 class BaseOutput:
@@ -126,7 +124,10 @@ class ValUnit:
     """
 
     def __init__(self, value, unit=None):
-        self.value = value
+        try:
+            self.value = float(value.replace("D", "e"))
+        except:
+            self.value = value
         self.unit = unit
 
     def __repr__(self):

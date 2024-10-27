@@ -104,6 +104,36 @@ def float_checker(string):
         return False
 
 
+def checkOverlap(mol):
+    """
+    checks mol object vor overlapping atoms
+    """
+    threshhold = 0.01
+    conf = mol.GetConformer(0)
+    atoms = mol.GetNumAtoms()
+    overlapping_pairs = []
+
+    for i in range(atoms):
+        for j in range(i+1, atoms):
+            pos_i = conf.GetAtomPosition(i)
+            pos_j = conf.GetAtomPosition(j)
+
+            import numpy as np
+            dist = np.sqrt(sum((pos_i[k] - pos_j[k])**2 for k in range(3)))
+            if dist < threshhold:
+                overlapping_pairs.append((i, j))
+
+    return overlapping_pairs
+
+
+def BlockToXyz(s: str):
+    s = s.strip()
+    nindex = s.index("\n")
+    if s[:nindex].isnumeric():
+        s = s[nindex:].strip()
+    return s
+
+
 if __name__ == "__main__":
     print(get_mopac())
     optional_imports("import numpy as np", globals())
