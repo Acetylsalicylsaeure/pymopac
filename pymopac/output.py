@@ -294,4 +294,4 @@ class NaiveParser(BaseParser):
                 else:
                     line_memory.append(line.strip())
 
-        outputclass.aux_dict = main_dic
+        outputclass.auxDict = main_dic
