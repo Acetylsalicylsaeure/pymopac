@@ -6,11 +6,13 @@ wraps MOPAC to conveniently interact with the program from within python scripts
 
 ## Dependencies
 + MOPAC in $PATH (some search is done for slightly different names, but older versions might not parse)
+
+### Optional (skip via pip --no-dependencies, supports Input from pure XYZ data and runs without plotting)
 + rdkit
 
-+ numpy<2 ([rdkit issue](https://github.com/rdkit/rdkit/issues/7477))
++ numpy
 
-+ matplotlib (optional for plotting)
++ matplotlib
 
 ## Installation
 
@@ -38,7 +40,7 @@ import pymopac
 
 infile = pymopac.MopacInput("CC")
 outfile = infile.run()
-print(outfile.outfile)
+print(outfile.result)
 ```
 
 ### Getting calculated properties
@@ -48,7 +50,7 @@ import pymopac
 
 outfile = pymopac.MopacInput("c1ccccc1").run()
 print(outfile.keys())
-print(outfile["IONIZATION POTENTIAL"])
+print(outfile["IONIZATION_POTENTIAL"])
 ```
 
 ### working with Mol objects
@@ -82,6 +84,15 @@ print(AllChem.GetBestRMS(mmff_mol, mopac_mol))
 + `plot=True`
     uses matplotlib to plot the progress in gradient and heat of formation
 
+## Parsers
+Custom parsers can be written, inherinting from input.BaseParser. Every Output class has a list at self.parser which, custom parsers can simply be added. If a parser has been added after Output initialization, parsing can be redone using Output.parseAll()
+
+By convention, custom parsers are able to set attributes on the Ouput class by having the Output passed as an argument at parse time.
+
+### AUX Parser
+
+A parser working on the MOPAC AUX file is called when a .aux file is passed, as is standard when creating the output via the `MopacInput.run()` method. Using this, all properties can be parsed in an unsupervised manner. Results of this can be found under `Output.auxDict`.
+
 ## Tests
 
 done for Ubuntu 24 LTS and Fedora 40,
@@ -89,5 +100,4 @@ done for Ubuntu 24 LTS and Fedora 40,
 Python 3.9-12
 
 ## Roadmap
-+ add multiline parsing
 + add parsing for further keywords
