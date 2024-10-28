@@ -14,7 +14,7 @@ H          2.89433       -0.90490       -0.56577
 H          2.89433        0.05954        0.92347
 H          2.89433        0.86704       -0.65638"""
     inp = MopacInput(string)
-    runfile = inp.inpfile()
+    runfile = inp.getInpFile()
     target_inp = MopacInput("CC")
-    target_runfile = target_inp.inpfile()
+    target_runfile = target_inp.getInpFile()
     assert len(runfile.split("\n")) == len(target_runfile.split("\n"))

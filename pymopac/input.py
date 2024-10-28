@@ -116,7 +116,7 @@ class MopacInput(BaseInput):
         # check for xyz block
         xyz_status, xyz_block = xyz_identifier(self.geometry)
         if xyz_status:
-            return xyz_block
+            return BlockToXyz(xyz_block)
 
         from rdkit import Chem
         from rdkit.Chem import AllChem
@@ -201,7 +201,7 @@ class MopacInput(BaseInput):
         with open(self.outpath, "r") as f:
             out = f.read()
             result_splitter = "-------------------------------------------------------------------------------\n"
-            result_splitter += "\n".join(self.getInpFile().split("\n")[:2])
+            # result_splitter += "\n".join(self.getInpFile().split("\n")[:2])
             try:
                 i = out.index(result_splitter) + len(result_splitter)
             except:
@@ -210,5 +210,8 @@ class MopacInput(BaseInput):
             return result
 
     def getAuxResult(self):
-        with open(self.auxpath, "r") as f:
-            return f.read()
+        if hasattr(self, "auxpath"):
+            with open(self.auxpath, "r") as f:
+                return f.read()
+        else:
+            return None

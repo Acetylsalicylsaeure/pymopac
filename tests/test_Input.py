@@ -2,6 +2,6 @@ from pymopac import MopacInput
 from rdkit import Chem
 
 
-def test_AddHs():
-    inp = MopacInput("CCC", AddHs=True, preopt=True)
-    assert len([x for x in inp.mol.GetAtoms()]) == 11
+def test_addHs():
+    inp = MopacInput("CCC", addHs=True, preopt=True)
+    assert len(inp.xyz.split("\n")) == 11

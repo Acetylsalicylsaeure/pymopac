@@ -5,7 +5,7 @@ from rdkit import Chem
 
 def test_modelheader():
     comment = "# test"
-    inp = MopacInput("CCC", comment=comment, AddHs=True,
+    inp = MopacInput("CCC", comment=comment, addHs=True,
                      preopt=True, verbose=True, aux=False)
     print(inp)
     out = inp.run()
@@ -15,11 +15,11 @@ def test_modelheader():
 
 def test_modelheader_aux():
     comment = "# test"
-    inp = MopacInput("CCC", comment=comment, AddHs=True,
+    inp = MopacInput("CCC", comment=comment, addHs=True,
                      preopt=True, verbose=True)
     print(inp)
     out = inp.run()
-    assert out.header == "PM7  AUX"
+    assert out.header == "PM7 AUX"
     assert out.comment == comment
 
 
