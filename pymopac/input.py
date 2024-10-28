@@ -70,6 +70,13 @@ class MopacInput(BaseInput):
     plot: bool
         if True, plots progress via matplotlib
 
+    Methods:
+        + run()
+        runs MOPAC as a subprocess
+        returns MopacOutput class
+
+        + getInpFile()
+        returns the MOPAC input as a string
     """
 
     def __init__(self, geometry,

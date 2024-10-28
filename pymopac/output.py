@@ -37,10 +37,16 @@ class BaseParser:
         self.location_dict = dict()
 
     def get_section(self, result):
+        """
+        preformating for the section which gets parsed
+        """
         return self.split_with_newlines(result)
         # TODO
 
     def locate(self, search_tuple: tuple):
+        """
+        finds search term and returns NumUnit dataclass
+        """
         start, end = self.find_sublist(search_tuple[0])
         if end is None:
             return None
@@ -73,6 +79,10 @@ class BaseParser:
         return result_dict
 
     def find_sublist(self, search):
+        """
+        method to make it easier to search sublists resulting from str.split()
+        returns start and end index
+        """
         if isinstance(search, str):
             search = search.split()
         search_length = len(search)
@@ -87,6 +97,9 @@ class BaseParser:
         return None, None
 
     def set_result(self, outputclass, search_tuple):
+        """
+        shorthand function that directly sets the search result on the output class
+        """
         search_result = self.locate(search_tuple)
         if isinstance(search_result, NumUnit):
             key = search_tuple[0].strip("=").strip().replace(" ", "_")
@@ -138,6 +151,21 @@ class ValUnit:
 
 
 class MopacOutput(BaseOutput):
+    """
+    Main Output class, calls parsers and structures outputs
+
+    Custom parsers can be written, inherinting from input.BaseParser.
+    Every Output class has a list at self.parser which, custom parsers can
+    simply be added. If a parser has been added after Output initialization,
+    parsing can be redone using Output.parseAll()
+    By convention, custom parsers are able to set attributes on the Ouput class
+    by having the Output passed as an argument at parse time.
+
+    a .aux file is passed, as is standard when creating the output via the
+    MopacInput.run() method. Using this, all properties can be parsed in an
+    unsupervised manner. Results of this can be found under self.auxDict
+    """
+
     def __init__(self, outfile: str, stdout=None, stderr=None, aux: str = None):
         super().__init__(outfile)
         self.outfile = outfile
@@ -154,7 +182,7 @@ class MopacOutput(BaseOutput):
         self.stderr = stderr
         self.parsers = [XyzParser(self.result), StandardParser(self.result)]
         if hasattr(self, "aux"):
-            self.parsers.append(NaiveParser(self.aux))
+            self.parsers.append(AuxParser(self.aux))
         self.parseAll()
 
     def keys(self):
@@ -167,6 +195,9 @@ class MopacOutput(BaseOutput):
         self.__dict__[key] = value
 
     def toMol(self):
+        """
+        returns an rdkit.Chem mol object
+        """
         from rdkit import Chem
         from rdkit.Chem import rdDetermineBonds
         if hasattr(self, "xyz"):
@@ -240,7 +271,7 @@ class StandardParser(BaseParser):
                         "Atom count of molecular formula incongruent with xyz block, proceed with caution")
 
 
-class NaiveParser(BaseParser):
+class AuxParser(BaseParser):
     def get_section(self, result):
         return result.split("\n")
 
