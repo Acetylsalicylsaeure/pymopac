@@ -100,9 +100,6 @@ done for Ubuntu 24 LTS and Fedora 40,
 Python 3.9-12
 
 ## Roadmap
-+ ensure that requirements are optional
-+ route through /dev/stdout for less disk writes
-+ implement better parsing algo
 + add parsing for further keywords
 + add accuracy tests
 + implement performance overhead benchmark
