@@ -2,7 +2,7 @@ from pymopac import MopacInput
 
 
 def test_silent(capsys):
-    out = MopacInput("CCC", preopt=True, AddHs=True, verbose=False).run()
+    out = MopacInput("CCC", preopt=True, addHs=True, verbose=False).run()
 
     captured = capsys.readouterr()
     assert captured.out == ""
@@ -10,7 +10,7 @@ def test_silent(capsys):
 
 
 def test_verbose(capsys):
-    MopacInput("CCC", preopt=True, AddHs=True, verbose=True).run()
+    MopacInput("CCC", preopt=True, addHs=True, verbose=True).run()
 
     captured = capsys.readouterr()
     print(captured.out)

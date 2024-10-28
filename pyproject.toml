@@ -4,10 +4,11 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pymopac"
-version = "0.3"
+version = "1.0"
 dependencies = [
 	"rdkit",
-	"numpy<2",
+	"numpy",
+	"matplotlib",
 ]
 authors = [
 	{name = "Acetylsalicylsaeure"},
@@ -21,7 +22,7 @@ classifiers = [
   #   3 - Alpha
   #   4 - Beta
   #   5 - Production/Stable
-  "Development Status :: 4 - Beta",
+  "Development Status :: 5 - Production/Stable",
 
   # Indicate who your project is intended for
   "Intended Audience :: Education",
