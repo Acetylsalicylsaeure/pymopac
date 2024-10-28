@@ -9,7 +9,7 @@ from .helpers import get_mopac
 from .input import MopacInput
 from .output import MopacOutput
 
-__version__ = "Stable"
+__version__ = "1.0"
 __author__ = "Acetylsalicylsaeure"
 
 
