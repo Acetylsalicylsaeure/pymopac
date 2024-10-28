@@ -170,7 +170,10 @@ class MopacOutput(BaseOutput):
         from rdkit.Chem import rdDetermineBonds
         if hasattr(self, "xyz"):
             mol = Chem.MolFromXYZBlock(self.xyz)
-            rdDetermineBonds.DetermineBonds(mol)
+            try:
+                rdDetermineBonds.DetermineBonds(mol)
+            except:
+                warnings.warn("failed to infer bond order")
             return mol
 
 

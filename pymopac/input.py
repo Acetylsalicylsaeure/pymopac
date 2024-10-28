@@ -1,3 +1,4 @@
+from os.path import isfile
 from rdkit.Chem.AllChem import warnings
 from .helpers import xyz_identifier, get_mopac, BlockToXyz, checkOverlap
 from .output import MopacOutput
@@ -131,7 +132,6 @@ class MopacInput(BaseInput):
 
         if self.addHs:
             mol = AllChem.AddHs(mol)
-            AllChem.EmbedMolecule(mol)
         if self.preopt:
             AllChem.EmbedMolecule(mol)
             AllChem.MMFFOptimizeMolecule(mol)
@@ -310,7 +310,8 @@ class MopacInput(BaseInput):
 
     def getAuxResult(self):
         if hasattr(self, "auxpath"):
-            with open(self.auxpath, "r") as f:
-                return f.read()
+            if os.path.isfile(self.auxpath):
+                with open(self.auxpath, "r") as f:
+                    return f.read()
         else:
             return None
