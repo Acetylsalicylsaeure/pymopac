@@ -1,7 +1,8 @@
-from .helpers import optional_imports, xyz_identifier, get_mopac, BlockToXyz, checkOverlap
+from rdkit.Chem.AllChem import warnings
+from .helpers import xyz_identifier, get_mopac, BlockToXyz, checkOverlap
 from .output import MopacOutput
 import os
-from time import time_ns
+from time import time_ns, sleep
 import subprocess
 
 
@@ -23,6 +24,9 @@ class BaseInput:
     """
 
     def __init__(self, **kwargs):
+        pass
+
+    def run(self):
         pass
 
 
@@ -90,10 +94,7 @@ class MopacInput(BaseInput):
         self.plot = plot
         self.aux = aux
 
-        if self.plot:
-            self.stream = True
-
-        self.xyz = self.GeoToXyz()
+        self.xyz = self.geoToXyz()
 
         if not path:
             ts = time_ns()
@@ -108,7 +109,7 @@ class MopacInput(BaseInput):
                 if self.verbose:
                     print(f"created path at {self.path}")
 
-    def GeoToXyz(self):
+    def geoToXyz(self):
         """
         Helper function that tries to infer a geometry from any input and
         returns a xyz block
@@ -169,22 +170,117 @@ class MopacInput(BaseInput):
         if self.verbose:
             print(f"input file written to {self.inpath}")
 
-        if self.stream:
-            process = self.stream_run()
+        if self.stream or self.plot:
+            process = self.verboseRun()
         else:
-            process = self.silent_run()
+            process = self.silentRun()
 
         return MopacOutput(outfile=self.getOutResult(),
                            stderr=process.stderr, stdout=process.stdout,
                            aux=self.getAuxResult())
 
     def stream_run(self):
-        pass
+        """
+        returns both the mopac process and the stream yielding lines
+        """
 
-    def verbose_run(self):
-        pass
+        with open(self.outpath, 'a'):
+            os.utime(self.outpath, None)
+        while not os.path.isfile(self.outpath):
+            sleep(0.01)
 
-    def silent_run(self):
+        # start tail process first and create stream generator
+        tail_process = subprocess.Popen(["tail", "-f", self.outpath],
+                                        stdout=subprocess.PIPE,
+                                        universal_newlines=True)
+
+        def pure_stream(mopac_proc, tail_proc):
+            try:
+                for line in tail_proc.stdout:
+                    yield line.strip()
+                    if mopac_proc.poll() is not None:
+                        break
+                    if "MOPAC DONE" in line:
+                        break
+            finally:
+                tail_proc.terminate()
+                tail_proc.wait()
+                mopac_proc.wait()
+
+        # Start MOPAC process after tail is ready
+        mopac_process = subprocess.Popen(["mopac", self.inpath])
+
+        # Create stream with both processes
+        stream = pure_stream(mopac_process, tail_process)
+        return mopac_process, stream
+
+    def verboseRun(self):
+        """
+        Sets up the basics for a stream run and contains switches for being
+        verbose and streaming. If plot is True, it creates a live-updating
+        matplotlib figure of gradient values.
+        """
+        process, lines = self.stream_run()
+        line_counter = 0
+
+        if self.plot:
+            import matplotlib.pyplot as plt
+            from matplotlib.animation import FuncAnimation
+
+            self.grads = []
+            self.heats = []
+            self.fig, (self.ax, self.ax_heat) = plt.subplots(2, 1)
+            self.line, = self.ax.plot([], [])
+            self.line_heat, = self.ax_heat.plot([], [])
+
+            self.ax.set_xlabel('Cycle')
+            self.ax.set_ylabel('Gradient')
+            self.ax_heat.set_xlabel('Cycle')
+            self.ax_heat.set_ylabel('Heat')
+
+            self.ax.set_title('Gradient vs. Cycle')
+            self.ax_heat.set_title('Heat vs. Cycle')
+
+            def update_plot(frame):
+                self.line.set_data(range(len(self.grads)), self.grads)
+                self.line_heat.set_data(range(len(self.heats)), self.heats)
+                self.ax.relim()
+                self.ax.autoscale_view()
+                self.ax_heat.relim()
+                self.ax_heat.autoscale_view()
+                return self.line, self.line_heat
+
+            self.ani = FuncAnimation(self.fig, update_plot,
+                                     frames=None, interval=100, blit=True,
+                                     cache_frame_data=False, save_count=100)
+            plt.tight_layout()
+            plt.show(block=False)
+
+        # Process all lines until the generator is exhausted
+        for line in lines:
+            if self.stream:
+                print(line)
+            if self.plot and "GRAD.:" in line:
+                spl = line.split()
+                i = spl.index("GRAD.:")
+                i_heat = spl.index("HEAT:")
+                self.grads.append(float(spl[i+1]))
+                self.heats.append(float(spl[i_heat+1]))
+                self.fig.canvas.flush_events()
+            line_counter += 1
+
+        # Generator has finished, wait for process to complete
+        process.wait()
+        if line_counter < 2:
+            print("No lines captured, calculations presumably done too fast")
+
+        if self.plot:
+            import matplotlib.pyplot as plt
+            plt.show()  # Keep the plot open after the function finishes
+
+        return process
+
+    def silentRun(self):
         """
         just runs MOPAC, no feedback or streaming
         """
@@ -201,10 +297,13 @@ class MopacInput(BaseInput):
         with open(self.outpath, "r") as f:
             out = f.read()
             result_splitter = "-------------------------------------------------------------------------------\n"
-            # result_splitter += "\n".join(self.getInpFile().split("\n")[:2])
+            length = len(result_splitter)
+            result_splitter += " " + \
+                "\n ".join(self.getInpFile().split("\n")[:2])
             try:
-                i = out.index(result_splitter) + len(result_splitter)
+                i = out.index(result_splitter) + length
             except:
+                warnings.warn("no output splitter found, proceed with caution")
                 i = 0
             result = out[i:]
             return result

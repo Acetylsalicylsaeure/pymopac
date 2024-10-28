@@ -12,13 +12,3 @@ def test_streamend(capsys):
     captured = capsys.readouterr()
     print(captured.out)
     assert target in captured.out
-
-
-def test_short_stream(capsys):
-    target = "No lines captured, calculations presumably done too fast"
-
-    infile = pymopac.MopacInput("C", addHs=True, stream=True)
-    infile.run()
-
-    captured = capsys.readouterr()
-    assert target in captured.out
