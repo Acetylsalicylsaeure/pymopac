@@ -96,7 +96,7 @@ class BaseParser:
         return [word for line in text.splitlines() for word in (line.split() or [''])]
 
     def parse(self, outputclass):
-        pass
+        warnings.warn("parser not implemented")
 
 
 class NumUnit:
@@ -148,7 +148,8 @@ class MopacOutput(BaseOutput):
             self.header = lines[0].strip()
             self.comment = lines[1].strip()
         except:
-            pass
+            self.header = "Not found"
+            self.comment = "Not found"
         self.stdout = stdout
         self.stderr = stderr
         self.parsers = [XyzParser(self.result), StandardParser(self.result)]
