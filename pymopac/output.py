@@ -16,7 +16,7 @@ class BaseOutput:
         return outfile
         # TODO
 
-    def parse_all(self):
+    def parseAll(self):
         for parser in self.parsers:
             parser.parse(self)
 
@@ -155,7 +155,7 @@ class MopacOutput(BaseOutput):
         self.parsers = [XyzParser(self.result), StandardParser(self.result)]
         if hasattr(self, "aux"):
             self.parsers.append(NaiveParser(self.aux))
-        self.parse_all()
+        self.parseAll()
 
     def keys(self):
         return self.__dict__.keys()
