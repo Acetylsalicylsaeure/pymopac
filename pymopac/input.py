@@ -1,15 +1,15 @@
 from os.path import isfile
 from rdkit.Chem.AllChem import warnings
-from .helpers import xyz_identifier, get_mopac, BlockToXyz, checkOverlap
+from .helpers import xyz_identifier, BlockToXyz, checkOverlap
 from .output import MopacOutput
+from . import __mopac_path__
 import os
 from time import time_ns, sleep
 import subprocess
 
 
 try:
-    from pymopac import get_mopac
-    MOPAC_PATH = get_mopac()
+    MOPAC_PATH = __mopac_path__
     if MOPAC_PATH is None:
         MOPAC_PATH = "mopac"
         print("MOPAC not found in path, falling back to trying 'mopac'. expect issues.")
