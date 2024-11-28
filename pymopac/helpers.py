@@ -1,5 +1,6 @@
 import os
 import warnings
+import subprocess
 
 
 def find_binaries_in_path():
@@ -52,12 +53,6 @@ def get_mopac():
         last_binary = None
         print("MOPAC binary not found, returning None")
     return last_binary
-
-    try:
-        for lib in libs:
-            exec(f"{lib}", globals())
-    except:
-        raise ImportError()
 
 
 def optional_imports(libs, namespace):
@@ -132,6 +127,13 @@ def BlockToXyz(s: str):
     if s[:nindex].isnumeric():
         s = s[nindex:].strip()
     return s
+
+
+def get_version_string(mopac_path):
+    version_string = subprocess.run(
+        [mopac_path, "--version"], capture_output=True, text=True)
+    version_string = str(version_string.stdout.strip())
+    return version_string.split()[2]
 
 
 if __name__ == "__main__":
