@@ -8,13 +8,12 @@ from rdkit.Chem import Descriptors
 
 # List of common molecules ordered roughly by size/complexity
 MOLECULES = [
-    "c1ccccc1",
     "F",
     "C",           # Methane
     "CC(=O)O",     # Acetic acid
     "c1ccccc1",
-    # "CCc1ccccc1CC",
-    # "C[C@H](CCCC(C)C)[C@H]1CC[C@@H]2[C@@]1(CC[C@H]3[C@H]2CC=C4[C@@]3(CC[C@@H](C4)O)C)C"
+    "CCc1ccccc1CC",
+    "C[C@H](CCCC(C)C)[C@H]1CC[C@@H]2[C@@]1(CC[C@H]3[C@H]2CC=C4[C@@]3(CC[C@@H](C4)O)C)C"
 ]
 
 
