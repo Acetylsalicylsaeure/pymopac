@@ -118,8 +118,6 @@ def plot_results(df):
                      capthick=2,
                      zorder=10)
 
-    ax2.axhline(y=1.0, color='gray', linestyle='--',
-                alpha=0.5, label='Classical (reference)')
     ax2.grid(True, linestyle='--', alpha=0.7)
     ax2.set_xlabel('Number of Atoms')
     ax2.set_ylabel('Relative Time (compared to Classical)')

@@ -6,7 +6,7 @@ from rdkit import Chem
 from rdkit.Chem import AllChem
 
 
-def check_overlap(smiles):
+def check_overlap(smiles, tolerance=0.1):
     mol = Chem.MolFromSmiles(smiles)
     mol = Chem.AddHs(mol)
     AllChem.EmbedMolecule(mol)
@@ -34,7 +34,7 @@ def check_overlap(smiles):
 
     rmsd = Chem.rdMolAlign.GetBestRMS(base_mol, api_mol)
     print(rmsd)
-    assert rmsd < 0.1
+    assert rmsd < tolerance
 
 
 def test_benzene_overlap():

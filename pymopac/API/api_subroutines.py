@@ -104,3 +104,6 @@ class MopacLib:
     # run MOPAC conventionally from an input file
     def run_mopac_from_input(self, path):
         return self.lib.run_mopac_from_input(path.encode('utf-8'))
+
+
+__all__ = ['MopacLib']

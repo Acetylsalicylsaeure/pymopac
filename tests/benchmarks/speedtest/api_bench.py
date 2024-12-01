@@ -6,9 +6,11 @@ from pymopac import API
 from rdkit import Chem
 from rdkit.Chem import AllChem
 import pandas as pd
-import cProfile
-import pstats
 import subprocess
+import timeit
+import time
+import gc
+import random
 
 
 def benchmark(smiles, repetitions):
@@ -18,6 +20,7 @@ def benchmark(smiles, repetitions):
     AllChem.MMFFOptimizeMolecule(mol)
     inpfile = pymopac.MopacInput(mol, preopt=False, addHs=False)
     inpstring = inpfile.getInpFile()
+
     funcs = {
         'MopacInput': lambda: bench_MopacInput(mol),
         'MopacInput_disk': lambda: bench_MopacInput_disk(mol),
@@ -25,27 +28,39 @@ def benchmark(smiles, repetitions):
         'Classical': lambda: bench_classical(inpstring)
     }
 
-    # Create list to store individual measurements
     measurements = {
         'Function': [],
         'Time (ms)': [],
         'Run': [],
-        'Function Calls': []
+        'Order': []  # Track the order of execution
     }
 
-    for name, func in funcs.items():
-        for run in range(repetitions):
-            profiler = cProfile.Profile()
-            profiler.enable()
-            func()
-            profiler.disable()
-            stats_obj = pstats.Stats(profiler)
+    # Create full experiment design
+    all_runs = []
+    for run in range(repetitions):
+        # For each repetition, create a shuffled list of all functions
+        func_names = list(funcs.keys())
+        random.shuffle(func_names)
+        all_runs.extend([(name, run) for name in func_names])
 
-            # Store individual measurement
-            measurements['Function'].append(name)
-            measurements['Time (ms)'].append(stats_obj.total_tt * 1000)
-            measurements['Run'].append(run)
-            measurements['Function Calls'].append(stats_obj.total_calls)
+    # Warmup phase (one run of each function in random order)
+    warmup_funcs = list(funcs.items())
+    random.shuffle(warmup_funcs)
+    for _, func in warmup_funcs:
+        func()
+
+    # Execute the randomized experiment design
+    for order, (name, run) in enumerate(all_runs):
+        gc.collect()
+        time.sleep(0.1)
+
+        timer = timeit.Timer(funcs[name])
+        wall_time = timer.timeit(number=1) * 1000  # ms
+
+        measurements['Function'].append(name)
+        measurements['Time (ms)'].append(wall_time)
+        measurements['Run'].append(run)
+        measurements['Order'].append(order)
 
     # Cleanup
     if os.path.exists('./tmp'):
