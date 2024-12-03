@@ -50,6 +50,13 @@ def mol_to_system(mol, charge=0, spin=0, model=0,
 
     # Get basic molecular information
     num_atoms = mol.GetNumAtoms()
+    # special condition to add a dummy in case of 4 atoms
+    # otherwise, mopac test condition force exits with code 1
+    if num_atoms == 4:
+        rwmol = Chem.RWMol(mol)
+        rwmol.AddAtom(Chem.Atom(99))
+        mol = rwmol.GetMol()
+        num_atoms += 1
     conf = mol.GetConformer()
 
     # Create MOPAC system
