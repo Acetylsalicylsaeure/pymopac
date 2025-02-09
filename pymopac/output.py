@@ -203,7 +203,8 @@ class MopacOutput(BaseOutput):
         if hasattr(self, "xyz"):
             mol = Chem.MolFromXYZBlock(self.xyz)
             try:
-                rdDetermineBonds.DetermineBonds(mol)
+                rdDetermineBonds.DetermineConnectivity(mol, useHueckel=False,
+                                                       useVdw=True)
             except:
                 warnings.warn("failed to infer bond order")
             return mol

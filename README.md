@@ -7,6 +7,8 @@ wraps MOPAC to conveniently interact with the program from within python scripts
 ## Dependencies
 + MOPAC in $PATH (some search is done for slightly different names, but older versions might not parse)
 
+recommended install via `conda install mopac`
+
 ### Optional (skip via pip --no-dependencies, supports Input from pure XYZ data and runs without plotting)
 + rdkit
 
@@ -93,6 +95,10 @@ By convention, custom parsers are able to set attributes on the Ouput class by h
 
 A parser working on the MOPAC AUX file is called when a .aux file is passed, as is standard when creating the output via the `MopacInput.run()` method. Using this, all properties can be parsed in an unsupervised manner. Results of this can be found under `Output.auxDict`.
 
+## API
+
+Starting with MOPAC v23, there exist API headers which are now also wrapped in pyMOPAC. Significant speedups can be observed for small molecules, as the computation takes place in memory and writes to disk can be avoided.
+
 ## Tests
 
 done for Ubuntu 24 LTS and Fedora 40,
@@ -101,5 +107,3 @@ Python 3.9-12
 
 ## Roadmap
 + add parsing for further keywords
-+ add accuracy tests
-+ implement performance overhead benchmark
