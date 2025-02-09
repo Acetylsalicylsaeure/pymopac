@@ -10,12 +10,10 @@ build:
   os: ubuntu-22.04
   tools:
     python: "3.12"
-    # Adding conda
-    conda: latest
 
 # Enable conda
 conda:
-  environment: docs/environment.yml
+  file: docs/environment.yml
 
 # Build documentation in the "docs/" directory with Sphinx
 sphinx:
