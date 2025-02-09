@@ -23,14 +23,12 @@ def check_overlap(smiles, tolerance=0.1):
     print("Base mol:")
     print(f"Atoms: {[atom.GetSymbol() for atom in base_mol.GetAtoms()]}")
     print(f"Aromatic: {[a.GetIsAromatic() for a in base_mol.GetAtoms()]}")
-    print(f"Bonds: {[(b.GetBeginAtomIdx(), b.GetEndAtomIdx(),
-          b.GetBondType()) for b in base_mol.GetBonds()]}")
+    print(f"Bonds: {[(b.GetBeginAtomIdx(), b.GetEndAtomIdx(), b.GetBondType()) for b in base_mol.GetBonds()]}")
 
     print("\nAPI mol:")
     print(f"Atoms: {[atom.GetSymbol() for atom in api_mol.GetAtoms()]}")
     print(f"Aromatic: {[a.GetIsAromatic() for a in api_mol.GetAtoms()]}")
-    print(f"Bonds: {[(b.GetBeginAtomIdx(), b.GetEndAtomIdx(),
-          b.GetBondType()) for b in api_mol.GetBonds()]}")
+    print(f"Bonds: {[(b.GetBeginAtomIdx(), b.GetEndAtomIdx(), b.GetBondType()) for b in api_mol.GetBonds()]}")
 
     rmsd = Chem.rdMolAlign.GetBestRMS(base_mol, api_mol)
     print(rmsd)
