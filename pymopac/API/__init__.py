@@ -2,6 +2,7 @@ from .api_helpers import lib_finder, mol_to_system, system_to_mol
 from .api_types import MopacSystem, MopacProperties, MopacState, MozymeState
 from .api_subroutines import MopacLib
 
+
 __lib_path__ = lib_finder()
 _lib = MopacLib(__lib_path__)
 

@@ -27,11 +27,13 @@ def lib_finder():
 
 
 def mol_to_system(mol, charge=0, spin=0, model=0,
-                  optimize_geometry=True, add_Hs=True):
+                  preopt=True, add_Hs=True, optimize_geometry=True):
     """Convert an RDKit molecule to a MOPAC system
 
     Args:
         mol: RDKit molecule object
+        preopt: if the mol object should by pre-optimized via MMFF
+        assHs: if hydrogens should be substituted at empty spots
         charge: Net molecular charge (default: 0)
         spin: Number of unpaired electrons (default: 0)
         model: Semiempirical model (default: 0/PM7)
@@ -45,14 +47,23 @@ def mol_to_system(mol, charge=0, spin=0, model=0,
         mol = Chem.AddHs(mol)
     if not mol.GetNumConformers():
         AllChem.EmbedMolecule(mol, randomSeed=42)
-    if optimize_geometry:
+    if preopt:
         AllChem.MMFFOptimizeMolecule(mol)
 
+    try:
+        from pymopac import __mopac_version__
+        _version = int(__mopac_version__.replace(".", ""))
+        if _version <2303:
+            _natom_fix = True
+        else:
+            _natom_fix=False
+    except:
+        _natom_fix=True
     # Get basic molecular information
     num_atoms = mol.GetNumAtoms()
     # special condition to add a dummy in case of 4 atoms
     # otherwise, mopac test condition force exits with code 1
-    if num_atoms == 4:
+    if _natom_fix and num_atoms == 4:
         rwmol = Chem.RWMol(mol)
         rwmol.AddAtom(Chem.Atom(99))
         mol = rwmol.GetMol()
