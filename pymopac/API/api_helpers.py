@@ -6,23 +6,136 @@ from ctypes import c_int, c_double
 import numpy as np
 from .api_types import MopacSystem
 from rdkit.Chem import rdDetermineBonds
+import ctypes.util
+import glob
+import platform
+from typing import Optional
 
+def lib_finder(verbose: bool = False) -> Optional[str]:
+    """Find the path to libmopac.so with improved search logic."""
+    lib_name = "libmopac.so"
+    system = platform.system()
 
-def lib_finder():
-    conda_prefix = os.getenv("CONDA_PREFIX")
-    if conda_prefix:
-        suspect = f"{conda_prefix}/lib/libmopac.so"
-        if os.path.isfile(suspect):
-            return suspect
+    # 1. Check Conda environments first
+    conda_paths = []
+    if os.getenv("CONDA_PREFIX"):
+        conda_prefix = os.getenv("CONDA_PREFIX")
+        conda_paths.extend([
+            os.path.join(conda_prefix, "lib", lib_name),
+            os.path.join(conda_prefix, "lib64", lib_name),
+            os.path.join(conda_prefix, "Library", "bin", lib_name),  # Windows
+        ])
 
+    # Also check active Python's site-packages
     try:
-        output = subprocess.check_output(["ldconfig", "-p"], text=True)
-        for line in output.splitlines():
-            if any(lib_name in line for lib_name in ["libmopac.so"]):
-                return line.split("=>")[-1].strip()
-    except (subprocess.SubprocessError, FileNotFoundError):
+        import site
+        conda_paths.extend(
+            os.path.join(p, lib_name) 
+            for p in site.getsitepackages()
+        )
+    except Exception:
         pass
 
+    for path in conda_paths:
+        if os.path.isfile(path):
+            if verbose:
+                print(f"Found in Conda environment: {path}")
+            return path
+
+    # 2. Use ctypes.util.find_library
+    ctypes_path = ctypes.util.find_library("mopac")
+    if ctypes_path:
+        if verbose:
+            print(f"Found via ctypes: {ctypes_path}")
+        return ctypes_path
+
+    # 3. System-specific searches
+    search_paths = []
+    if system == "Linux":
+        # Check LD_LIBRARY_PATH directories
+        ld_paths = os.getenv("LD_LIBRARY_PATH", "").split(":")
+        search_paths.extend(ld_paths)
+        
+        # Common Linux library paths
+        search_paths.extend([
+            "/usr/local/lib",
+            "/usr/lib",
+            "/usr/lib/x86_64-linux-gnu",
+            "/lib",
+            "/lib64"
+        ])
+        
+        # Try ldconfig cache
+        try:
+            ldconfig = subprocess.run(
+                ["ldconfig", "-p"],
+                capture_output=True,
+                text=True,
+                check=True
+            )
+            for line in ldconfig.stdout.splitlines():
+                if lib_name in line:
+                    parts = line.strip().split()
+                    if len(parts) >= 4 and parts[-2] == "=>":
+                        path = parts[-1]
+                        if os.path.isfile(path):
+                            if verbose:
+                                print(f"Found via ldconfig: {path}")
+                            return path
+        except (subprocess.SubprocessError, FileNotFoundError):
+            pass
+
+    elif system == "Darwin":  # macOS
+        search_paths.extend([
+            "/usr/local/lib",
+            "/opt/homebrew/lib",
+            "/usr/lib",
+            os.path.expanduser("~/lib")
+        ])
+        
+        # Check DYLD_LIBRARY_PATH
+        dyld_paths = os.getenv("DYLD_LIBRARY_PATH", "").split(":")
+        search_paths.extend(dyld_paths)
+
+    elif system == "Windows":
+        search_paths.extend([
+            os.path.join(os.getenv("SystemRoot", ""), "System32"),
+            os.path.join(os.getenv("PROGRAMFILES", ""), "MOPAC"),
+            os.path.join(os.getenv("LOCALAPPDATA", ""), "Programs", "MOPAC")
+        ])
+        lib_name = "mopac.dll"  # Windows uses different naming
+
+    # 4. Search through all potential paths with version globbing
+    for path in search_paths:
+        if not os.path.isdir(path):
+            continue
+            
+        # Look for versioned files (e.g., libmopac.so.1.2.3)
+        pattern = os.path.join(path, f"{lib_name}*")
+        for lib_path in glob.glob(pattern):
+            if os.path.isfile(lib_path):
+                real_path = os.path.realpath(lib_path)
+                if verbose:
+                    print(f"Found in system path: {real_path}")
+                return real_path
+
+    # 5. Final fallback: try default names with version suffix
+    fallback_names = [
+        lib_name,
+        f"{lib_name}.7",  # Common version suffix pattern
+        f"{lib_name}.6",
+        f"{lib_name}.1"
+    ]
+    
+    for name in fallback_names:
+        path = ctypes.util.find_library(name)
+        if path and os.path.isfile(path):
+            if verbose:
+                print(f"Found via fallback search: {path}")
+            return path
+
+    if verbose:
+        print("Library not found in any standard locations")
     return None
 
 
