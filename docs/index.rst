@@ -10,7 +10,7 @@ Welcome to pymopac's documentation!
    :maxdepth: 2
    :caption: Contents:
 
-   README
+   Summary <README>
    pymopac
 
 
