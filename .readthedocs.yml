@@ -11,7 +11,7 @@ build:
   tools:
     python: "3.12"
     # Adding conda
-    conda: "latest"
+    conda: latest
 
 # Enable conda
 conda:
