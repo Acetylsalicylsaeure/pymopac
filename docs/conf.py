@@ -27,6 +27,8 @@ extensions = [
     'myst_parser',
 ]
 
+autodoc_mock_imports = ['pymopac.API']
+
 # Add these lines to enable autosummary
 autosummary_generate = True
 add_module_names = False  # If you prefer shorter titles in the TOC
