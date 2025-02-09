@@ -2,4 +2,12 @@ name: docs
 channels:
   - conda-forge
 dependencies:
+  - python=3.12
   - mopac
+  - sphinx
+  - pip
+  - pip:
+    - sphinx_rtd_theme
+    - myst-parser
+    - rdkit
+    - numpy==1.26
